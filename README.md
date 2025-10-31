@@ -1,2 +1,3 @@
-# team_20
-This is a project from team 20, where we will be completing a hiking app to track and rate hikes. 
+# team_20 
+
+This is a project done by team_20, where made an app that tracks your hikes and allows you to leave reviews on hikes. 
