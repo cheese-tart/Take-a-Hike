@@ -57,7 +57,9 @@ create table Location2
    Country VARCHAR2(20),
    Latitude DECIMAL(10, 8),
    Longitude DECIMAL(11, 8),
-   primary key (LocationID));
+   primary key (LocationID),
+   foreign key (PostalCode, Country) references Location1(PostalCode, Country)
+     on delete cascade);
 
 create table Hike1
   (Kind VARCHAR2(20) not null,
@@ -78,7 +80,9 @@ create table Hike2
    Elevation INT,
    Distance INT,
    primary key (HikeID),
-   foreign key (LocationID) references Location2(LocationID));
+   foreign key (LocationID) references Location2(LocationID),
+   foreign key (Kind, Distance, Elevation, Duration) references Hike1(Kind, Distance, Elevation, Duration)
+     on delete cascade);
 
 create table WeatherWarning
   (SafetyHazardID INT not null,
