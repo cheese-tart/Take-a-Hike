@@ -176,3 +176,143 @@ window.onload = function() {
 function fetchTableData() {
     fetchAndDisplayUsers();
 }
+
+
+// this is the hiketable implementation 
+async function fetchAndDisplayHikes() {
+    const tableElement = document.getElementById('hiketable');
+    const tableBody = tableElement.querySelector('tbody');
+
+    try {
+        const response = await fetch('/hiketable', {
+            method: 'GET'
+        });
+
+        const responseData = await response.json();
+        // Assuming success: true and data is an array of records
+        const hikeContent = responseData.data || []; 
+
+        if (tableBody) {
+            tableBody.innerHTML = '';
+        }
+
+        if (hikeContent.length === 0) {
+            const row = tableBody.insertRow();
+            const cell = row.insertCell();
+            cell.colSpan = 4; // Based on your HTML's current 4 columns
+            cell.textContent = 'No hike data found.';
+            return;
+        }
+
+        // Check if data is an array of objects (preferred) or array of arrays (common in DB responses)
+        if (typeof hikeContent[0] === 'object' && !Array.isArray(hikeContent[0])) {
+            // Data is an array of objects (e.g., [{HikeID: 1, Name: 'Trail A', ...}])
+            hikeContent.forEach(hike => {
+                const row = tableBody.insertRow();
+                
+                // IMPORTANT: The order of fields must correspond to the column index
+                // We are inserting the fields necessary for Hike1 and Hike2:
+                const fields = [
+                    hike.HikeID || 'N/A', 
+                    hike.Name || 'Unnamed', 
+                    hike.Kind || 'N/A', 
+                    hike.Distance || 'N/A', 
+                    hike.Elevation || 'N/A', 
+                    hike.Duration || 'N/A', 
+                    hike.Difficulty || 'N/A', 
+                    hike.Season || 'N/A', 
+                    hike.TrailCondition || 'N/A'
+                ];
+                
+                // Since your HTML only has 4 columns, only the first 4 fields will display
+                fields.slice(0, 4).forEach(field => {
+                    const cell = row.insertCell();
+                    cell.textContent = field;
+                });
+            });
+        } else {
+            // Data is an array of arrays (e.g., [['1', 'Trail A', ...]])
+            hikeContent.forEach(hikeRecord => {
+                const row = tableBody.insertRow();
+                // Slice to fit the 4 columns in the current HTML
+                hikeRecord.slice(0, 4).forEach((field) => {
+                    const cell = row.insertCell();
+                    cell.textContent = field;
+                });
+            });
+        }
+    } catch (error) {
+        console.error("Failed to fetch hike data:", error);
+        if (tableBody) {
+            tableBody.innerHTML = `<tr><td colspan="4" style="color:red;">Error loading data. See console.</td></tr>`;
+        }
+    }
+}
+
+
+async function resetHikeTable() {
+    const response = await fetch("/initiate-hiketable", {
+        method: 'POST'
+    });
+    const responseData = await response.json();
+    const messageElement = document.getElementById('resetHikeResultMsg');
+
+    if (responseData.success) {
+        messageElement.textContent = "HikeTable initiated successfully!";
+        fetchTableData(); // Refresh table
+    } else {
+        messageElement.textContent = `Error initiating HikeTable: ${responseData.message || 'Unknown error'}`;
+        console.error("Error initiating HikeTable:", responseData);
+    }
+}
+
+/**
+ * Inserts a new hike record into the HikeTable.
+ */
+async function insertHikeTable(event) {
+    event.preventDefault();
+
+    // Collect form data (must match HTML form IDs)
+    const hikeID = document.getElementById('insertHikeID').value;
+    const name = document.getElementById('insertName').value;
+    const kind = document.getElementById('insertKind').value;
+    const distance = document.getElementById('insertDistance').value;
+    const elevation = document.getElementById('insertElevation').value;
+    const duration = document.getElementById('insertDuration').value;
+    const difficulty = document.getElementById('insertDifficulty').value;
+    const season = document.getElementById('insertSeason').value;
+    const trailCondition = document.getElementById('insertTrailCondition').value;
+
+    try {
+        const response = await fetch('/insert-hiketable', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                HikeID: parseInt(hikeID),
+                Name: name,
+                Kind: kind,
+                Distance: parseInt(distance),
+                Elevation: parseInt(elevation),
+                Duration: parseInt(duration),
+                Difficulty: parseInt(difficulty),
+                Season: season,
+                TrailCondition: parseInt(trailCondition)
+            })
+        });
+
+        const responseData = await response.json();
+        const messageElement = document.getElementById('insertHikeResultMsg');
+
+        if (responseData.success) {
+            messageElement.textContent = `Hike "${name}" inserted successfully!`;
+            // Clear form
+            event.target.reset();
+            fetchTableData(); // Refresh table
+        } else {
+            messageElement.textContent = `Error inserting hike: ${responseData.message || 'Unknown error'}`;
+        }
+    } catch (err) {
+        document.getElementById('insertHikeResultMsg').textContent = `Request failed: ${err.message}`;
+        console.error("Insert request failed:", err);
+    }
+}
