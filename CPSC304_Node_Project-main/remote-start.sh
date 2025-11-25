@@ -1,5 +1,5 @@
 #!/bin/bash
-
+unset NODE_OPTIONS
 # Set Oracle environment
 if [ -d /opt/oracle/instantclient_23_7 ]; then
     export ORACLE_HOME=/opt/oracle/instantclient_23_7
