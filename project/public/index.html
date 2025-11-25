@@ -31,8 +31,10 @@
         <thead>
             <tr>
                 <!--Table head, need to be adjusted accordingly to align with your own.-->
-                <th>ID</th>
+                <th>User ID</th>
                 <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
             </tr>
         </thead>
         <tbody>
@@ -49,12 +51,15 @@
 
     <br><hr><br> <!-- ========================================================================= -->
 
-    <h2> Insert Values into DemoTable </h2>
+    <h2>Register a New AppUser</h2>
+    <p>Provide the new user's ID, name, email, and phone number to insert them into the AppUser table.</p>
     <form id="insertDemotable">
-        ID: <input type="number" id="insertId" placeholder="Enter ID" required> <br><br>
-        Name: <input type="text" id="insertName" placeholder="Enter Name" maxlength="20"> <br><br>
+        User ID: <input type="number" id="insertId" placeholder="Enter User ID" required> <br><br>
+        Name: <input type="text" id="insertName" placeholder="Enter Full Name" maxlength="20" required> <br><br>
+        Email: <input type="email" id="insertEmail" placeholder="Enter Email Address" maxlength="30" required> <br><br>
+        Phone Number: <input type="text" id="insertPhone" placeholder="Enter Phone Number" maxlength="20" required> <br><br>
 
-        <button type="submit"> insert </button> <br>
+        <button type="submit"> register </button> <br>
     </form>
     <div id="insertResultMsg"></div>
 

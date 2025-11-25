@@ -1,7 +1,74 @@
 const oracledb = require('oracledb');
+const fs = require('fs/promises');
+const path = require('path');
 const loadEnvFile = require('./utils/envUtil');
 
 const envVariables = loadEnvFile('./.env');
+const sqlFilePath = path.join(__dirname, 'hiketracker.sql');
+let cachedSqlStatements = null;
+
+const tableDefinitions = {
+    SafetyHazard: {
+        columns: ['SafetyHazardID', 'HazardType'],
+        primaryKey: ['SafetyHazardID']
+    },
+    Preference: {
+        columns: ['PreferenceID', 'Distance', 'Duration', 'Elevation', 'Difficulty'],
+        primaryKey: ['PreferenceID']
+    },
+    AppUser: {
+        columns: ['UserID', 'Name', 'PreferenceID', 'Email', 'PhoneNumber'],
+        primaryKey: ['UserID']
+    },
+    Equipment: {
+        columns: ['EquipmentID', 'Name', 'Kind'],
+        primaryKey: ['EquipmentID']
+    },
+    Location1: {
+        columns: ['PostalCode', 'Country', 'Province_State', 'City'],
+        primaryKey: ['PostalCode', 'Country']
+    },
+    Location2: {
+        columns: ['LocationID', 'Address', 'PostalCode', 'Country', 'Latitude', 'Longitude'],
+        primaryKey: ['LocationID']
+    },
+    Hike1: {
+        columns: ['Kind', 'Distance', 'Elevation', 'Duration', 'Difficulty'],
+        primaryKey: ['Kind', 'Distance', 'Elevation', 'Duration']
+    },
+    Hike2: {
+        columns: ['HikeID', 'LocationID', 'Name', 'Kind', 'Season', 'TrailCondition', 'Duration', 'Elevation', 'Distance'],
+        primaryKey: ['HikeID']
+    },
+    WeatherWarning: {
+        columns: ['SafetyHazardID', 'Description', 'DateIssued', 'SeverityLevel', 'Kind'],
+        primaryKey: ['SafetyHazardID']
+    },
+    AnimalSighting: {
+        columns: ['SafetyHazardID', 'Description', 'DateIssued', 'Animal'],
+        primaryKey: ['SafetyHazardID']
+    },
+    ForestFireWarning: {
+        columns: ['SafetyHazardID', 'Description', 'DateIssued', 'Rating', 'Cause'],
+        primaryKey: ['SafetyHazardID']
+    },
+    Needs: {
+        columns: ['EquipmentID', 'HikeID'],
+        primaryKey: ['EquipmentID', 'HikeID']
+    },
+    Saves: {
+        columns: ['UserID', 'HikeID'],
+        primaryKey: ['UserID', 'HikeID']
+    },
+    Has: {
+        columns: ['HikeID', 'SafetyHazardID'],
+        primaryKey: ['HikeID', 'SafetyHazardID']
+    },
+    Feedback: {
+        columns: ['FeedbackID', 'Rating', 'Review', 'DateSubmitted', 'UserID', 'HikeID'],
+        primaryKey: ['FeedbackID']
+    }
+};
 
 // Database configuration setup. Ensure your .env file has the required database credentials.
 const dbConfig = {
@@ -76,70 +143,200 @@ async function testOracleConnection() {
     });
 }
 
-async function fetchDemotableFromDb() {
+async function fetchTableRecords(tableName) {
+    const definition = getTableDefinition(tableName);
+    const projection = definition.columns.join(', ');
+
     return await withOracleDB(async (connection) => {
-        const result = await connection.execute('SELECT * FROM DEMOTABLE');
+        const result = await connection.execute(`SELECT ${projection} FROM ${tableName}`);
         return result.rows;
-    }).catch(() => {
-        return [];
+    }).catch(() => []);
+}
+
+async function initiateTable(_tableName) {
+    return await withOracleDB(async (connection) => {
+        await executeSqlScript(connection);
+        return true;
+    }).catch(() => false);
+}
+
+async function insertIntoTable(tableName, recordValues = {}) {
+    const definition = getTableDefinition(tableName);
+    const normalizedRecord = normalizeRecord(definition, recordValues, tableName);
+    const columns = Object.keys(normalizedRecord);
+
+    if (columns.length === 0) {
+        throw new Error('No columns provided for insert');
+    }
+
+    const bindParams = {};
+    const valueTokens = columns.map((column, index) => {
+        const bindKey = `val_${index}`;
+        bindParams[bindKey] = normalizedRecord[column];
+        return `:${bindKey}`;
     });
+
+    return await withOracleDB(async (connection) => {
+        const result = await connection.execute(
+            `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES (${valueTokens.join(', ')})`,
+            bindParams,
+            { autoCommit: true }
+        );
+        return result.rowsAffected && result.rowsAffected > 0;
+    }).catch(() => false);
+}
+
+async function updateTableRecords(tableName, criteria = {}, updates = {}) {
+    const definition = getTableDefinition(tableName);
+    const normalizedCriteria = normalizeRecord(definition, criteria, tableName);
+    const normalizedUpdates = normalizeRecord(definition, updates, tableName);
+
+    if (Object.keys(normalizedUpdates).length === 0) {
+        throw new Error('No columns provided for update');
+    }
+
+    if (Object.keys(normalizedCriteria).length === 0) {
+        throw new Error('Update criteria must be provided');
+    }
+
+    const binds = {};
+    const setClauses = Object.keys(normalizedUpdates).map((column, index) => {
+        const bindKey = `set_${index}`;
+        binds[bindKey] = normalizedUpdates[column];
+        return `${column} = :${bindKey}`;
+    });
+
+    const whereClauses = Object.keys(normalizedCriteria).map((column, index) => {
+        const bindKey = `where_${index}`;
+        binds[bindKey] = normalizedCriteria[column];
+        return `${column} = :${bindKey}`;
+    });
+
+    return await withOracleDB(async (connection) => {
+        const result = await connection.execute(
+            `UPDATE ${tableName} SET ${setClauses.join(', ')} WHERE ${whereClauses.join(' AND ')}`,
+            binds,
+            { autoCommit: true }
+        );
+        return result.rowsAffected && result.rowsAffected > 0;
+    }).catch(() => false);
+}
+
+async function countTableRows(tableName) {
+    return await withOracleDB(async (connection) => {
+        const result = await connection.execute(`SELECT COUNT(*) FROM ${tableName}`);
+        return result.rows[0][0];
+    }).catch(() => -1);
+}
+
+async function fetchDemotableFromDb() {
+    return fetchTableRecords('AppUser');
 }
 
 async function initiateDemotable() {
-    return await withOracleDB(async (connection) => {
-        try {
-            await connection.execute(`DROP TABLE DEMOTABLE`);
-        } catch(err) {
-            console.log('Table might not exist, proceeding to create...');
-        }
-
-        const result = await connection.execute(`
-            CREATE TABLE DEMOTABLE (
-                id NUMBER PRIMARY KEY,
-                name VARCHAR2(20)
-            )
-        `);
-        return true;
-    }).catch(() => {
-        return false;
-    });
+    return initiateTable();
 }
 
-async function insertDemotable(id, name) {
-    return await withOracleDB(async (connection) => {
-        const result = await connection.execute(
-            `INSERT INTO DEMOTABLE (id, name) VALUES (:id, :name)`,
-            [id, name],
-            { autoCommit: true }
-        );
+async function insertDemotable(id, name, email, phoneNumber) {
+    const numericId = Number(id);
+    if (Number.isNaN(numericId)) {
+        throw new Error('UserID must be a valid number');
+    }
 
-        return result.rowsAffected && result.rowsAffected > 0;
-    }).catch(() => {
-        return false;
+    const trimmedName = (name || '').trim();
+    const trimmedEmail = (email || '').trim();
+    const trimmedPhone = (phoneNumber || '').trim();
+
+    if (!trimmedName || !trimmedEmail || !trimmedPhone) {
+        throw new Error('Name, email, and phone number are required');
+    }
+
+    return insertIntoTable('AppUser', {
+        UserID: numericId,
+        Name: trimmedName,
+        PreferenceID: null,
+        Email: trimmedEmail,
+        PhoneNumber: trimmedPhone
     });
 }
 
 async function updateNameDemotable(oldName, newName) {
-    return await withOracleDB(async (connection) => {
-        const result = await connection.execute(
-            `UPDATE DEMOTABLE SET name=:newName where name=:oldName`,
-            [newName, oldName],
-            { autoCommit: true }
-        );
-
-        return result.rowsAffected && result.rowsAffected > 0;
-    }).catch(() => {
-        return false;
-    });
+    return updateTableRecords('AppUser', { Name: oldName }, { Name: newName });
 }
 
 async function countDemotable() {
-    return await withOracleDB(async (connection) => {
-        const result = await connection.execute('SELECT Count(*) FROM DEMOTABLE');
-        return result.rows[0][0];
-    }).catch(() => {
-        return -1;
+    return countTableRows('AppUser');
+}
+
+async function executeSqlScript(connection) {
+    const statements = await loadSqlStatements();
+
+    for (const statement of statements) {
+        const sql = statement.trim();
+        if (!sql) {
+            continue;
+        }
+
+        try {
+            await connection.execute(sql);
+        } catch (err) {
+            const isDropStatement = sql.toUpperCase().startsWith('DROP TABLE');
+            const tableMissing = err.errorNum === 942;
+
+            if (isDropStatement && tableMissing) {
+                continue;
+            }
+
+            console.error(`Failed to execute SQL: ${sql}`);
+            throw err;
+        }
+    }
+
+    await connection.commit();
+}
+
+async function loadSqlStatements() {
+    if (cachedSqlStatements) {
+        return cachedSqlStatements;
+    }
+
+    const fileContent = await fs.readFile(sqlFilePath, 'utf8');
+    cachedSqlStatements = fileContent
+        .split(/;\s*(?:\r?\n|$)/)
+        .map((stmt) => stmt.trim())
+        .filter((stmt) => stmt.length > 0);
+
+    return cachedSqlStatements;
+}
+
+function getTableDefinition(tableName) {
+    const definition = tableDefinitions[tableName];
+    if (!definition) {
+        throw new Error(`Unsupported table: ${tableName}`);
+    }
+    return definition;
+}
+
+function normalizeRecord(definition, record = {}, tableName = 'table') {
+    const normalized = {};
+    if (!record) {
+        return normalized;
+    }
+
+    const columnMap = definition.columns.reduce((map, column) => {
+        map[column.toUpperCase()] = column;
+        return map;
+    }, {});
+
+    Object.entries(record).forEach(([key, value]) => {
+        const targetColumn = columnMap[key.toUpperCase()];
+        if (!targetColumn) {
+            throw new Error(`Column ${key} is not valid for table ${tableName}`);
+        }
+        normalized[targetColumn] = value;
     });
+
+    return normalized;
 }
 
 module.exports = {
@@ -148,5 +345,11 @@ module.exports = {
     initiateDemotable, 
     insertDemotable, 
     updateNameDemotable, 
-    countDemotable
+    countDemotable,
+    fetchTableRecords,
+    initiateTable,
+    insertIntoTable,
+    updateTableRecords,
+    countTableRows,
+    tableDefinitions
 };
