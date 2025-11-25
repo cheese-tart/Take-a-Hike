@@ -175,78 +175,73 @@ window.onload = function() {
 // You can invoke this after any table-modifying operation to keep consistency.
 function fetchTableData() {
     fetchAndDisplayUsers();
+    fetchAndDisplayHikes();
 }
 
 
 // this is the hiketable implementation 
 async function fetchAndDisplayHikes() {
-    const tableElement = document.getElementById('hiketable');
-    const tableBody = tableElement.querySelector('tbody');
+    const hikeTable = document.getElementById('hikeTable');
+    if (!hikeTable) {
+        return;
+    }
 
-    try {
-        const response = await fetch('/hiketable', {
-            method: 'GET'
+    const hikeTableBody = hikeTable.querySelector('tbody');
+
+    // Fetch Hike2 for main details and Hike1 for difficulty, then merge on shared keys.
+    const [hike2Response, hike1Response] = await Promise.all([
+        fetch('/hike2', { method: 'GET' }),
+        fetch('/hike1', { method: 'GET' })
+    ]);
+
+    const hike2Data = await hike2Response.json();
+    const hike1Data = await hike1Response.json();
+
+    const hikes = hike2Data.data || [];
+    const hike1 = hike1Data.data || [];
+
+    // Build lookup for difficulty using composite key (Kind, Distance, Elevation, Duration).
+    const difficultyLookup = hike1.reduce((lookup, entry) => {
+        const [kind, distance, elevation, duration, difficulty] = entry;
+        const key = [kind, distance, elevation, duration].join('|');
+        lookup[key] = difficulty;
+        return lookup;
+    }, {});
+
+    if (hikeTableBody) {
+        hikeTableBody.innerHTML = '';
+    }
+
+    hikes.forEach((hike) => {
+        const row = hikeTableBody.insertRow();
+        const key = [hike[3], hike[8], hike[7], hike[6]].join('|'); // Kind, Distance, Elevation, Duration
+        const difficulty = difficultyLookup[key] ?? 'N/A';
+        const orderedValues = [
+            hike[0], // HikeID
+            hike[2], // Name
+            hike[3], // Kind
+            hike[4], // Season
+            hike[5], // TrailCondition
+            hike[6], // Duration
+            hike[7], // Elevation
+            hike[8], // Distance
+            difficulty, // Difficulty from Hike1
+            hike[1]  // LocationID
+        ];
+        orderedValues.forEach((value, index) => {
+            const cell = row.insertCell(index);
+            cell.textContent = value;
         });
 
-        const responseData = await response.json();
-        // Assuming success: true and data is an array of records
-        const hikeContent = responseData.data || []; 
-
-        if (tableBody) {
-            tableBody.innerHTML = '';
-        }
-
-        if (hikeContent.length === 0) {
-            const row = tableBody.insertRow();
-            const cell = row.insertCell();
-            cell.colSpan = 4; // Based on your HTML's current 4 columns
-            cell.textContent = 'No hike data found.';
-            return;
-        }
-
-        // Check if data is an array of objects (preferred) or array of arrays (common in DB responses)
-        if (typeof hikeContent[0] === 'object' && !Array.isArray(hikeContent[0])) {
-            // Data is an array of objects (e.g., [{HikeID: 1, Name: 'Trail A', ...}])
-            hikeContent.forEach(hike => {
-                const row = tableBody.insertRow();
-                
-                // IMPORTANT: The order of fields must correspond to the column index
-                // We are inserting the fields necessary for Hike1 and Hike2:
-                const fields = [
-                    hike.HikeID || 'N/A', 
-                    hike.Name || 'Unnamed', 
-                    hike.Kind || 'N/A', 
-                    hike.Distance || 'N/A', 
-                    hike.Elevation || 'N/A', 
-                    hike.Duration || 'N/A', 
-                    hike.Difficulty || 'N/A', 
-                    hike.Season || 'N/A', 
-                    hike.TrailCondition || 'N/A'
-                ];
-                
-                // Since your HTML only has 4 columns, only the first 4 fields will display
-                fields.slice(0, 4).forEach(field => {
-                    const cell = row.insertCell();
-                    cell.textContent = field;
-                });
-            });
-        } else {
-            // Data is an array of arrays (e.g., [['1', 'Trail A', ...]])
-            hikeContent.forEach(hikeRecord => {
-                const row = tableBody.insertRow();
-                // Slice to fit the 4 columns in the current HTML
-                hikeRecord.slice(0, 4).forEach((field) => {
-                    const cell = row.insertCell();
-                    cell.textContent = field;
-                });
-            });
-        }
-    } catch (error) {
-        console.error("Failed to fetch hike data:", error);
-        if (tableBody) {
-            tableBody.innerHTML = `<tr><td colspan="4" style="color:red;">Error loading data. See console.</td></tr>`;
-        }
-    }
+        const feedbackCell = row.insertCell(orderedValues.length);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = 'View Feedback';
+        btn.onclick = () => {
+            window.location.href = `feedback.html?hikeId=${encodeURIComponent(hike[0])}`;
+        };
+        feedbackCell.appendChild(btn);
+    });
 }
 
 
