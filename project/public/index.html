@@ -26,7 +26,7 @@
 
     <!-- Show 'Demotable'. 
         Data will be fetched and inserted here dynamically using JavaScript. -->
-    <h2>Show Demotable</h2>
+    <h2>Show UserTable</h2>
     <table id="demotable" border="1">
         <thead>
             <tr>
@@ -43,7 +43,7 @@
 
     <br><hr><br> <!-- ========================================================================= -->
 
-    <h2>Reset Demotable</h2>
+    <h2>Reset UserTable</h2>
     <p>If you wish to reset the table press on the reset button. If this is the first time you're running this page, you MUST use reset</p>
     <button id="resetDemotable"> reset </button> <br>
     <!-- A placeholder to display messages related to the reset operation. -->
@@ -65,7 +65,7 @@
 
     <br><hr><br> <!-- ========================================================================= -->
 
-    <h2>Update Name in DemoTable</h2>
+    <h2>Update Name in UserTable</h2>
     <p>The values are case sensitive and if you enter in the wrong case, the update statement will not do anything.</p>
     <form id="updataNameDemotable">
         Old Name: <input type="text" id="updateOldName" placeholder="Enter Old Name" required> <br><br>
@@ -78,12 +78,68 @@
 
     <br><hr><br> <!-- ========================================================================= -->
 
-    <h2>Count the Tuples in DemoTable</h2>
+    <h2>Count the Tuples in UserTable</h2>
     <button id="countDemotable"> count </button> <br><br>
     <!-- A placeholder to display the count result. -->
     <div id="countResultMsg"></div> <br>
 
     <!-- ===================================================================================== -->
+    <br><hr><br> <!-- ========================================================================= -->
+
+    <!-- Show 'HikeTable'. 
+        Data will be fetched and inserted here dynamically using JavaScript. -->
+        <h2>Show HikeTable</h2>
+        <table id="hiketable" border="1">
+            <thead>
+                <tr>
+                    <!-- Table headers based on Hike1 and Hike2 schemas -->
+                    <th>Hike ID</th>
+                    <th>Name</th>
+                    <th>Kind</th>
+                    <th>Distance (m)</th>
+                    <th>Elevation (m)</th>
+                    <th>Duration (min)</th>
+                    <th>Difficulty (1-10)</th>
+                    <th>Season</th>
+                    <th>Trail Condition (1-10)</th>
+                </tr>
+            </thead>
+            <tbody id="hiketable-body">
+                <tr>
+                    <td colspan="9">Loading hike data...</td>
+                </tr>
+            </tbody>
+        </table>
+
+    <br><hr><br> <!-- ========================================================================= -->
+    <h2>Reset HikeTable</h2>
+    <p>Press the reset button to re-initialize the Hike tables.</p>
+    <button id="resetHikeTable"> Reset Hikes </button> <br>
+    <div id="resetHikeResultMsg" style="margin-top: 5px;"></div>
+
+    <br><hr><br> <!-- ========================================================================= -->
+
+    <h2>Insert New Hike Record</h2>
+    <form id="insertHikeForm">
+        Hike ID: <input type="number" id="insertHikeID" placeholder="Hike ID" required> <br><br>
+        Name: <input type="text" id="insertName" placeholder="Trail Name" maxlength="20" required> <br><br>
+        Kind: <input type="text" id="insertKind" placeholder="Kind (e.g., Loop)" maxlength="20" required> <br><br>
+        Distance (m): <input type="number" id="insertDistance" placeholder="Distance in meters" required> <br><br>
+        Elevation (m): <input type="number" id="insertElevation" placeholder="Elevation gain in meters" required> <br><br>
+        Duration (min): <input type="number" id="insertDuration" placeholder="Duration in minutes" required> <br><br>
+        Difficulty (1-10): <input type="number" id="insertDifficulty" placeholder="Difficulty" min="1" max="10" required> <br><br>
+        Season: <input type="text" id="insertSeason" placeholder="Best Season" maxlength="20"> <br><br>
+        Trail Condition (1-10): <input type="number" id="insertTrailCondition" placeholder="Condition rating" min="1" max="10"> <br><br>
+
+        <button type="submit"> Insert Hike </button> <br>
+    </form>
+    <div id="insertHikeResultMsg" style="margin-top: 5px;"></div>
+
+
+    <br><hr><br>
+
+
+
     <!-- External JavaScript file that contains the functionality/logic for the operations above. -->
     <script src="scripts.js"></script>
 </body>
