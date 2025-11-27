@@ -189,7 +189,7 @@ async function deleteAppUser(uid) {
             'DELETE FROM Feedback WHERE UserID = :uid', [uid], { autoCommit: true }
         );
 
-        const APPUSERS = await connection.execite(
+        const APPUSERS = await connection.execute(
             'SELECT * FROM AppUser'
         );
 
@@ -210,7 +210,7 @@ async function deleteAppUser(uid) {
 async function selectHike(query) {
     return await withOracleDB(async (connection) => {
         const SQL = 'SELECT h2.name FROM Hike2 h2 JOIN Hike1 h1 ON h1.Kind=h2.Kind AND h1.Distance=h2.Distance AND h1.Elevation=h2.Elevation AND h1.Duration=h2.Duration WHERE ${query}'
-        const result = await connection.execute(SQL, {});
+        const result = await connection.execute(SQL, [query]);
         return result.rows;
     }).catch(() => {
         return [];
@@ -221,7 +221,7 @@ async function selectHike(query) {
 async function projectHike(attributes) {
     return await withOracleDB(async (connection) => {
         const SQL = 'SELECT ${attributes} FROM Hike1 h1 JOIN Hike2 h2 ON h1.Kind=h2.Kind AND h1.Distance=h2.Distance AND h1.Elevation=h2.Elevation AND h1.Duration=h2.Duration'
-        const result = await connection.execute(SQL, {});
+        const result = await connection.execute(SQL, [attributes]);
         return result.rows;
     }).catch(() => {
         return [];
@@ -232,6 +232,8 @@ async function projectHike(attributes) {
 async function findUsersWhoHiked(hid) {
     return await withOracleDB(async (connection) => {
         const SQL = 'SELECT a.Name FROM AppUser a JOIN Saves s ON a.UserID = s.UserID JOIN Hike2 h2 ON s.HikeID = h2.HikeID WHERE h2.HikeID = :hid'
+        const result = await connection.exectute(SQL, [hid]);
+        return result.rows;
     }).catch(() => {
         return [];
     })
@@ -242,7 +244,8 @@ async function findAvgDiffPerSeason() {
     return await withOracleDB(async (connection) => {
         const result = await connection.execute(
             'SELECT h2.Season, AVG(h1.difficulty) FROM Hike2 h2 JOIN Hike1 h1 ON h1.Kind=h2.Kind AND h1.Distance=h2.Distance AND h1.Elevation=h2.Elevation AND h1.Duration=h2.Duration GROUP BY h2.Season'
-        )
+        );
+        return result.rows;
     }).catch(() => {
         return [];
     });
@@ -253,10 +256,23 @@ async function findSafeHikes() {
     return await withOracleDB(async (connection) => {
         const result = await connection.execute(
             'SELECT h2.name FROM Hike2 h2 JOIN Has h ON h2.HikeID = h.HikeID GROUP BY h2.HikeID HAVING COUNT(h.SafetyHazardID) < 1'
-        )
+        );
+        return result.rows
     }).catch(() => {
         return [];
     });
+}
+
+// 9. Nested aggregation with GROUP BY
+async function findGoodConditionHikes() {
+    return await withOracleDB(async (connection) => {
+        const result = await connection.execute(
+            'SELECT h2.Name, h2.Season, h2.TrailCondition FROM Hike2 h2 GROUP BY h2.HikeID, h2.Name, h2.Season, h2.TrailCondition HAVING h2.TrailCondition > (SELECT AVG(h2b.TrailCondition) FROM Hike2 h2b WHERE h2bSeason = h2.season)'
+        );
+        return result.rows;
+    }).catch(() => {
+        return [];
+    })
 }
 
  async function countDemotable() {
