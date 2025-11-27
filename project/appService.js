@@ -105,11 +105,12 @@ const oracledb = require('oracledb');
      });
  }
 
- async function insertDemotable(id, name) {
+ // 1. INSERT
+ async function insertAppUser(uid, name, pid, email, pnum) {
      return await withOracleDB(async (connection) => {
          const result = await connection.execute(
-             `INSERT INTO DEMOTABLE (id, name) VALUES (:id, :name)`,
-             [id, name],
+             `INSERT INTO AppUser (uid, name, pid, email, pnum) VALUES (:uid, :name, :pid, :email, :pnum)`,
+             [uid, name, pid, email, pnum],
              { autoCommit: true }
          );
 
@@ -118,20 +119,67 @@ const oracledb = require('oracledb');
          return false;
      });
  }
+// 1. INSERT
+ async function insertPreference(pid, dist, dur, elev, diff) {
+    return await withOracleDB(async (connection) => {
+        const result = await connection.execute(
+            `INSERT INTO Preference (pid, dist, dur, elev, diff) VALUES (:pid, :dist, :dur, :elev, :diff)`,
+            [pid, dist, dur, elev, diff],
+            { autoCommit: true }
+        );
 
- async function updateNameDemotable(oldName, newName) {
-     return await withOracleDB(async (connection) => {
-         const result = await connection.execute(
-             `UPDATE DEMOTABLE SET name=:newName where name=:oldName`,
-             [newName, oldName],
-             { autoCommit: true }
-         );
-
-         return result.rowsAffected && result.rowsAffected > 0;
-     }).catch(() => {
-         return false;
-     });
+        return result.rowsAffected && result.rowsAffected > 0;
+    }).catch(() => {
+        return false;
+    });
  }
+
+ // 2. UPDATE
+ async function updateAppUser(uid, newName, email, pnum) {
+    return await withOracleDB(async (connection) => {
+        const fields = [];
+        const binds = { uid };
+
+        if (newName != null) {
+            fields.push("name = :newName");
+            binds.newName = newName;
+        }
+
+        if (email != null) {
+            fields.push("email = :email");
+            binds.email = email;
+        }
+
+        if (pnum != null) {
+            fields.push("pnum = :pnum");
+            binds.pnum = pnum;
+        }
+
+        if (fields.length === 0) {
+            return false;
+        }
+
+        const sql = `
+            UPDATE AppUser
+            SET ${fields.join(", ")}
+            WHERE uid = :uid
+        `;
+
+        const result = await connection.execute(sql, binds, { autoCommit: true });
+
+        return result.rowsAffected && result.rowsAffected > 0;
+    }).catch(() => {
+        return false;
+    });
+}
+
+async function deleteAppUser(uid) {
+    return await withOracleDB(async (connection) => {
+        const result = await connection.execute(
+            'DELETE FROM AppUser'
+        )
+    });
+}
 
  async function countDemotable() {
      return await withOracleDB(async (connection) => {
@@ -141,6 +189,8 @@ const oracledb = require('oracledb');
          return -1;
      });
  }
+
+
 
  module.exports = {
      testOracleConnection,
