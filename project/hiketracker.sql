@@ -219,9 +219,9 @@ insert into Location2 values (00004, '10 Glacier Ave', 'V2L4W1', 'Canada', 53.91
 
 insert into Hike2 values (00000, 00000, 'Eagle Ridge Trail', 'Loop', 'Summer', 4, 180, 400, 12);
 insert into Hike2 values (00001, 00001, 'Maple Peak Trail', 'Out-and-Back', 'Spring', 3, 120, 250, 8);
-insert into Hike2 values (00002, 00002, 'Riverside Path', 'Coastal', 'Fall', 5, 240, 500, 25);
-insert into Hike2 values (00003, 00003, 'Victoria Bluff Trail', 'Summit', 'Winter', 2, 300, 800, 15);
-insert into Hike2 values (00004, 00004, 'Glacier Point Trail', 'Loop', 'Summer', 4, 360, 1000, 20);
+insert into Hike2 values (00002, 00002, 'Riverside Path', 'Coastal', 'Fall', 5, 360, 500, 25);
+insert into Hike2 values (00003, 00003, 'Victoria Bluff Trail', 'Summit', 'Winter', 2, 240, 800, 15);
+insert into Hike2 values (00004, 00004, 'Glacier Point Trail', 'Coastal', 'Summer', 4, 360, 500, 25);
 
 insert into Feedback values (00000, 5, 'Incredible views and well-maintained path.', TO_DATE('2025-08-01', 'YYYY-MM-DD'), 00000, 00000);
 insert into Feedback values (00001, 4, 'Beautiful trail but slightly muddy.', TO_DATE('2025-08-02', 'YYYY-MM-DD'), 00001, 00001);
