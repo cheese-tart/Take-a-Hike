@@ -176,8 +176,31 @@ const oracledb = require('oracledb');
 async function deleteAppUser(uid) {
     return await withOracleDB(async (connection) => {
         const result = await connection.execute(
-            'DELETE FROM AppUser'
-        )
+            'DELETE FROM AppUser WHERE UserID = :uid', [uid], { autoCommit: true }
+        );
+
+        await connection.execute(
+            'DELETE FROM Preference WHERE UserID = :uid', [uid], { autoCommit: true }
+        );
+
+        await connection.execute(
+            'DELETE FROM Feedback WHERE UserID = :uid', [uid], { autoCommit: true }
+        );
+
+        const APPUSERS = await connection.execite(
+            'SELECT * FROM AppUser'
+        );
+
+        console.log(APPUSERS.rows);
+
+        if (result.rowsAffected === 0) {
+            console.error('No user found with UserID: ${uid}');
+            return false;
+        }
+
+        return true;
+    }).catch(() => {
+        return false;
     });
 }
 
