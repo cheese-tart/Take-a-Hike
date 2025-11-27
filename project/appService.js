@@ -95,7 +95,7 @@ const oracledb = require('oracledb');
 
          const result = await connection.execute(`
              CREATE TABLE DEMOTABLE (
-                 id NUMBER PRIMARY KEY,
+             id NUMBER PRIMARY KEY,
                  name VARCHAR2(20)
              )
          `);
@@ -119,6 +119,7 @@ const oracledb = require('oracledb');
          return false;
      });
  }
+
 // 1. INSERT
  async function insertPreference(pid, dist, dur, elev, diff) {
     return await withOracleDB(async (connection) => {
@@ -173,6 +174,7 @@ const oracledb = require('oracledb');
     });
 }
 
+// 3. DELETE
 async function deleteAppUser(uid) {
     return await withOracleDB(async (connection) => {
         const result = await connection.execute(
@@ -204,6 +206,48 @@ async function deleteAppUser(uid) {
     });
 }
 
+// 4. SELECT
+async function selectHike(query) {
+    return await withOracleDB(async (connection) => {
+        const SQL = 'SELECT h2.name FROM Hike2 h2 JOIN Hike1 h1 ON h1.Kind=h2.Kind AND h1.Distance=h2.Distance AND h1.Elevation=h2.Elevation AND h1.Duration=h2.Duration WHERE ${query}'
+        const result = await connection.execute(SQL, {});
+        return result.rows;
+    }).catch(() => {
+        return [];
+    });
+}
+
+// 5. PROJECTION
+async function projectHike(attributes) {
+    return await withOracleDB(async (connection) => {
+        const SQL = 'SELECT ${attributes} FROM Hike1 h1 JOIN Hike2 h2 ON h1.Kind=h2.Kind AND h1.Distance=h2.Distance AND h1.Elevation=h2.Elevation AND h1.Duration=h2.Duration'
+        const result = await connection.execute(SQL, {});
+        return result.rows;
+    }).catch(() => {
+        return [];
+    })
+}
+
+// 6. JOIN
+async function findUsersWhoHiked(hid) {
+    return await withOracleDB(async (connection) => {
+        const SQL = 'SELECT a.Name FROM AppUser a JOIN Saves s ON a.UserID = s.UserID JOIN Hike2 h2 ON s.HikeID = h2.HikeID WHERE h2.HikeID = :hid'
+    }).catch(() => {
+        return [];
+    })
+}
+
+// 7. Aggergation with GROUP BY
+async function findAvgDiffPerSeason() {
+    return await withOracleDB(async (connection) => {
+        const result = await connection.execute(
+            'SELECT h2.Season, AVG(h1.difficulty) FROM Hike2 h2 JOIN Hike1 h1 ON h1.Kind=h2.Kind AND h1.Distance=h2.Distance AND h1.Elevation=h2.Elevation AND h1.Duration=h2.Duration GROUP BY h2.Season'
+        )
+    }).catch(() => {
+        return [];
+    })
+}
+
  async function countDemotable() {
      return await withOracleDB(async (connection) => {
          const result = await connection.execute('SELECT Count(*) FROM DEMOTABLE');
@@ -212,8 +256,6 @@ async function deleteAppUser(uid) {
          return -1;
      });
  }
-
-
 
  module.exports = {
      testOracleConnection,
