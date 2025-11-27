@@ -41,21 +41,23 @@ async function fetchAndDisplayUsers() {
     const tableElement = document.getElementById('demotable');
     const tableBody = tableElement.querySelector('tbody');
 
-    const response = await fetch('/demotable', {
+    const response = await fetch('/appuser', {
         method: 'GET'
     });
 
     const responseData = await response.json();
-    const demotableContent = responseData.data;
+    const demotableContent = responseData.data || [];
 
     // Always clear old, already fetched data before new fetching process.
     if (tableBody) {
         tableBody.innerHTML = '';
     }
 
-    demotableContent.forEach(user => {
+    demotableContent.forEach((user) => {
         const row = tableBody.insertRow();
-        user.forEach((field, index) => {
+        // user = [UserID, Name, PreferenceID, Email, PhoneNumber]
+        const ordered = [user[0], user[1], user[3], user[4]];
+        ordered.forEach((field, index) => {
             const cell = row.insertCell(index);
             cell.textContent = field;
         });
@@ -64,7 +66,7 @@ async function fetchAndDisplayUsers() {
 
 // This function resets or initializes the demotable.
 async function resetDemotable() {
-    const response = await fetch("/initiate-demotable", {
+    const response = await fetch("/initiate-appuser", {
         method: 'POST'
     });
     const responseData = await response.json();
@@ -87,16 +89,17 @@ async function insertDemotable(event) {
     const emailValue = document.getElementById('insertEmail').value;
     const phoneValue = document.getElementById('insertPhone').value;
 
-    const response = await fetch('/insert-demotable', {
+    const response = await fetch('/insert-appuser', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            id: idValue,
-            name: nameValue,
-            email: emailValue,
-            phoneNumber: phoneValue
+            UserID: parseInt(idValue, 10),
+            Name: nameValue,
+            PreferenceID: null,
+            Email: emailValue,
+            PhoneNumber: phoneValue
         })
     });
 
@@ -118,14 +121,14 @@ async function updateNameDemotable(event) {
     const oldNameValue = document.getElementById('updateOldName').value;
     const newNameValue = document.getElementById('updateNewName').value;
 
-    const response = await fetch('/update-name-demotable', {
+    const response = await fetch('/update-appuser', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            oldName: oldNameValue,
-            newName: newNameValue
+            criteria: { Name: oldNameValue },
+            updates: { Name: newNameValue }
         })
     });
 
@@ -143,15 +146,12 @@ async function updateNameDemotable(event) {
 // Counts rows in the demotable.
 // Modify the function accordingly if using different aggregate functions or procedures.
 async function countDemotable() {
-    const response = await fetch("/count-demotable", {
-        method: 'GET'
-    });
-
+    const response = await fetch("/appuser", { method: 'GET' });
     const responseData = await response.json();
     const messageElement = document.getElementById('countResultMsg');
 
-    if (responseData.success) {
-        const tupleCount = responseData.count;
+    if (responseData.success && Array.isArray(responseData.data)) {
+        const tupleCount = responseData.data.length;
         messageElement.textContent = `The number of tuples in demotable: ${tupleCount}`;
     } else {
         alert("Error in count demotable!");
