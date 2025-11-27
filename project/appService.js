@@ -245,7 +245,18 @@ async function findAvgDiffPerSeason() {
         )
     }).catch(() => {
         return [];
-    })
+    });
+}
+
+// 8. Aggregation with HAVING
+async function findSafeHikes() {
+    return await withOracleDB(async (connection) => {
+        const result = await connection.execute(
+            'SELECT h2.name FROM Hike2 h2 JOIN Has h ON h2.HikeID = h.HikeID GROUP BY h2.HikeID HAVING COUNT(h.SafetyHazardID) < 1'
+        )
+    }).catch(() => {
+        return [];
+    });
 }
 
  async function countDemotable() {
