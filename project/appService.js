@@ -275,6 +275,15 @@ async function findGoodConditionHikes() {
     })
 }
 
+// 10. DIVISION
+async function findHikeByRating() {
+    return await withOracleDB(async (connection) => {
+        const result = await connection.execute(
+            'SELECT u.Name FROM AppUser u WHERE NOT EXISTS (SELECT h.HikeID FROM Hike2 h MINUS (SELECT s.HikeId FROM Saves s WHERE s.UserID = u.UserID))'
+        )
+    })
+}
+
  async function countDemotable() {
      return await withOracleDB(async (connection) => {
          const result = await connection.execute('SELECT Count(*) FROM DEMOTABLE');
