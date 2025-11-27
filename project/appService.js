@@ -76,40 +76,43 @@ const oracledb = require('oracledb');
      });
  }
 
- async function fetchDemotableFromDb() {
-     return await withOracleDB(async (connection) => {
-         const result = await connection.execute('SELECT * FROM DEMOTABLE');
-         return result.rows;
-     }).catch(() => {
-         return [];
-     });
- }
+//  async function fetchDemotableFromDb() {
+//      return await withOracleDB(async (connection) => {
+//          const result = await connection.execute('SELECT * FROM DEMOTABLE');
+//          return result.rows;
+//      }).catch(() => {
+//          return [];
+//      });
+//  }
 
- async function initiateDemotable() {
-     return await withOracleDB(async (connection) => {
-         try {
-             await connection.execute(`DROP TABLE DEMOTABLE`);
-         } catch(err) {
-             console.log('Table might not exist, proceeding to create...');
-         }
+//  async function initiateDemotable() {
+//      return await withOracleDB(async (connection) => {
+//          try {
+//              await connection.execute(`DROP TABLE DEMOTABLE`);
+//          } catch(err) {
+//              console.log('Table might not exist, proceeding to create...');
+//          }
 
-         const result = await connection.execute(`
-             CREATE TABLE DEMOTABLE (
-             id NUMBER PRIMARY KEY,
-                 name VARCHAR2(20)
-             )
-         `);
-         return true;
-     }).catch(() => {
-         return false;
-     });
- }
+//          const result = await connection.execute(`
+//              CREATE TABLE DEMOTABLE (
+//              id NUMBER PRIMARY KEY,
+//                  name VARCHAR2(20)
+//              )
+//          `);
+//          return true;
+//      }).catch(() => {
+//          return false;
+//      });
+//  }
 
  // 1. INSERT
  async function insertAppUser(uid, name, pid, email, pnum) {
      return await withOracleDB(async (connection) => {
          const result = await connection.execute(
-             `INSERT INTO AppUser (uid, name, pid, email, pnum) VALUES (:uid, :name, :pid, :email, :pnum)`,
+             `
+             INSERT INTO AppUser (uid, name, pid, email, pnum)
+             VALUES (:uid, :name, :pid, :email, :pnum)
+             `,
              [uid, name, pid, email, pnum],
              { autoCommit: true }
          );
@@ -120,11 +123,14 @@ const oracledb = require('oracledb');
      });
  }
 
-// 1. INSERT
+ // 1. INSERT
  async function insertPreference(pid, dist, dur, elev, diff) {
     return await withOracleDB(async (connection) => {
         const result = await connection.execute(
-            `INSERT INTO Preference (pid, dist, dur, elev, diff) VALUES (:pid, :dist, :dur, :elev, :diff)`,
+            `
+            INSERT INTO Preference (pid, dist, dur, elev, diff)
+            VALUES (:pid, :dist, :dur, :elev, :diff)
+            `,
             [pid, dist, dur, elev, diff],
             { autoCommit: true }
         );
@@ -175,23 +181,41 @@ const oracledb = require('oracledb');
 }
 
 // 3. DELETE
-async function deleteAppUser(uid) {
-    return await withOracleDB(async (connection) => {
-        const result = await connection.execute(
-            'DELETE FROM AppUser WHERE UserID = :uid', [uid], { autoCommit: true }
-        );
+ async function deleteAppUser(uid) {
+     return await withOracleDB(async (connection) => {
+         const result = await connection.execute(
+            `
+            DELETE FROM AppUser
+            WHERE UserID = :uid
+            `,
+            [uid],
+            { autoCommit: true }
+         );
 
-        await connection.execute(
-            'DELETE FROM Preference WHERE UserID = :uid', [uid], { autoCommit: true }
-        );
+         await connection.execute(
+            `
+            DELETE FROM Preference
+            WHERE UserID = :uid
+            `,
+            [uid],
+            { autoCommit: true }
+         );
 
-        await connection.execute(
-            'DELETE FROM Feedback WHERE UserID = :uid', [uid], { autoCommit: true }
-        );
+         await connection.execute(
+            `
+            DELETE FROM Feedback
+            WHERE UserID = :uid
+            `,
+            [uid],
+            { autoCommit: true }
+         );
 
-        const APPUSERS = await connection.execute(
-            'SELECT * FROM AppUser'
-        );
+         const APPUSERS = await connection.execute(
+            `
+            SELECT *
+            FROM AppUser
+            `
+         );
 
         console.log(APPUSERS.rows);
 
@@ -207,32 +231,55 @@ async function deleteAppUser(uid) {
 }
 
 // 4. SELECT
-async function selectHike(query) {
-    return await withOracleDB(async (connection) => {
-        const SQL = 'SELECT h2.name FROM Hike2 h2 JOIN Hike1 h1 ON h1.Kind=h2.Kind AND h1.Distance=h2.Distance AND h1.Elevation=h2.Elevation AND h1.Duration=h2.Duration WHERE ${query}'
-        const result = await connection.execute(SQL, [query]);
-        return result.rows;
+ async function selectHike(query) {
+     return await withOracleDB(async (connection) => {
+         const SQL = `
+        SELECT h2.name
+        FROM Hike2 h2
+        JOIN Hike1 h1
+          ON h1.Kind = h2.Kind
+         AND h1.Distance = h2.Distance
+         AND h1.Elevation = h2.Elevation
+         AND h1.Duration = h2.Duration
+        WHERE ${query}
+        `;
+         const result = await connection.execute(SQL, [query]);
+         return result.rows;
     }).catch(() => {
         return [];
     });
 }
 
 // 5. PROJECTION
-async function projectHike(attributes) {
-    return await withOracleDB(async (connection) => {
-        const SQL = 'SELECT ${attributes} FROM Hike1 h1 JOIN Hike2 h2 ON h1.Kind=h2.Kind AND h1.Distance=h2.Distance AND h1.Elevation=h2.Elevation AND h1.Duration=h2.Duration'
-        const result = await connection.execute(SQL, [attributes]);
-        return result.rows;
+ async function projectHike(attributes) {
+     return await withOracleDB(async (connection) => {
+         const SQL = `
+        SELECT ${attributes}
+        FROM Hike1 h1
+        JOIN Hike2 h2
+          ON h1.Kind = h2.Kind
+         AND h1.Distance = h2.Distance
+         AND h1.Elevation = h2.Elevation
+         AND h1.Duration = h2.Duration
+        `;
+         const result = await connection.execute(SQL, [attributes]);
+         return result.rows;
     }).catch(() => {
         return [];
     })
 }
 
 // 6. JOIN
-async function findUsersWhoHiked(hid) {
-    return await withOracleDB(async (connection) => {
-        const SQL = 'SELECT a.Name FROM AppUser a JOIN Saves s ON a.UserID = s.UserID JOIN Hike2 h2 ON s.HikeID = h2.HikeID WHERE h2.HikeID = :hid'
-        const result = await connection.exectute(SQL, [hid]);
+ async function findUsersWhoHiked(hid) {
+     return await withOracleDB(async (connection) => {
+         const SQL = `
+        SELECT a.Name
+        FROM AppUser a
+        JOIN Saves s ON a.UserID = s.UserID
+        JOIN Hike2 h2 ON s.HikeID = h2.HikeID
+        WHERE h2.HikeID = :hid
+        `;
+         const result = await connection.exectute(SQL, [hid]);
         return result.rows;
     }).catch(() => {
         return [];
@@ -240,11 +287,18 @@ async function findUsersWhoHiked(hid) {
 }
 
 // 7. Aggergation with GROUP BY
-async function findAvgDiffPerSeason() {
-    return await withOracleDB(async (connection) => {
-        const result = await connection.execute(
-            'SELECT h2.Season, AVG(h1.difficulty) FROM Hike2 h2 JOIN Hike1 h1 ON h1.Kind=h2.Kind AND h1.Distance=h2.Distance AND h1.Elevation=h2.Elevation AND h1.Duration=h2.Duration GROUP BY h2.Season'
-        );
+ async function findAvgDiffPerSeason() {
+     return await withOracleDB(async (connection) => {
+        const result = await connection.execute(`
+            SELECT h2.Season, AVG(h1.difficulty)
+            FROM Hike2 h2
+            JOIN Hike1 h1
+              ON h1.Kind = h2.Kind
+             AND h1.Distance = h2.Distance
+             AND h1.Elevation = h2.Elevation
+             AND h1.Duration = h2.Duration
+            GROUP BY h2.Season
+        `);
         return result.rows;
     }).catch(() => {
         return [];
@@ -252,11 +306,15 @@ async function findAvgDiffPerSeason() {
 }
 
 // 8. Aggregation with HAVING
-async function findSafeHikes() {
-    return await withOracleDB(async (connection) => {
-        const result = await connection.execute(
-            'SELECT h2.name FROM Hike2 h2 JOIN Has h ON h2.HikeID = h.HikeID GROUP BY h2.HikeID HAVING COUNT(h.SafetyHazardID) < 1'
-        );
+ async function findSafeHikes() {
+     return await withOracleDB(async (connection) => {
+        const result = await connection.execute(`
+            SELECT h2.name
+            FROM Hike2 h2
+            JOIN Has h ON h2.HikeID = h.HikeID
+            GROUP BY h2.HikeID
+            HAVING COUNT(h.SafetyHazardID) < 1
+        `);
         return result.rows
     }).catch(() => {
         return [];
@@ -264,11 +322,18 @@ async function findSafeHikes() {
 }
 
 // 9. Nested aggregation with GROUP BY
-async function findGoodConditionHikes() {
-    return await withOracleDB(async (connection) => {
-        const result = await connection.execute(
-            'SELECT h2.Name, h2.Season, h2.TrailCondition FROM Hike2 h2 GROUP BY h2.HikeID, h2.Name, h2.Season, h2.TrailCondition HAVING h2.TrailCondition > (SELECT AVG(h2b.TrailCondition) FROM Hike2 h2b WHERE h2bSeason = h2.season)'
-        );
+ async function findGoodConditionHikes() {
+     return await withOracleDB(async (connection) => {
+        const result = await connection.execute(`
+            SELECT h2.Name, h2.Season, h2.TrailCondition
+            FROM Hike2 h2
+            GROUP BY h2.HikeID, h2.Name, h2.Season, h2.TrailCondition
+            HAVING h2.TrailCondition > (
+                SELECT AVG(h2b.TrailCondition)
+                FROM Hike2 h2b
+                WHERE h2bSeason = h2.season
+            )
+        `);
         return result.rows;
     }).catch(() => {
         return [];
@@ -276,11 +341,21 @@ async function findGoodConditionHikes() {
 }
 
 // 10. DIVISION
-async function findHikeByRating() {
-    return await withOracleDB(async (connection) => {
-        const result = await connection.execute(
-            'SELECT u.Name FROM AppUser u WHERE NOT EXISTS (SELECT h.HikeID FROM Hike2 h MINUS (SELECT s.HikeId FROM Saves s WHERE s.UserID = u.UserID))'
-        )
+ async function findHikeByRating() {
+     return await withOracleDB(async (connection) => {
+        const result = await connection.execute(`
+            SELECT u.Name
+            FROM AppUser u
+            WHERE NOT EXISTS (
+                SELECT h.HikeID
+                FROM Hike2 h
+                MINUS (
+                    SELECT s.HikeId
+                    FROM Saves s
+                    WHERE s.UserID = u.UserID
+                )
+            )
+        `)
     })
 }
 
