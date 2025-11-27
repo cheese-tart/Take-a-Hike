@@ -86,6 +86,7 @@ async function initializeConnectionPool() {
     try {
         await oracledb.createPool(dbConfig);
         console.log('Connection pool started');
+        await ensureSeedData();
     } catch (err) {
         console.error('Initialization error: ' + err.message);
     }
@@ -309,6 +310,38 @@ async function loadSqlStatements() {
     return cachedSqlStatements;
 }
 
+async function ensureSeedData() {
+    // Runs the SQL script once on startup if AppUser is missing or empty
+    return withOracleDB(async (connection) => {
+        try {
+            const result = await connection.execute('SELECT COUNT(*) FROM AppUser');
+            const count = Number(result.rows?.[0]?.[0] || 0);
+
+            if (count === 0) {
+                console.log('Seeding database from hiketracker.sql...');
+                await executeSqlScript(connection);
+                console.log('Seeding complete.');
+                return true;
+            }
+
+            return false;
+        } catch (err) {
+            const tableMissing = err.errorNum === 942;
+            if (tableMissing) {
+                console.log('Schema missing. Running hiketracker.sql to initialize...');
+                await executeSqlScript(connection);
+                console.log('Seeding complete.');
+                return true;
+            }
+
+            throw err;
+        }
+    }).catch((err) => {
+        console.error('Failed to seed database:', err.message);
+        return false;
+    });
+}
+
 function getTableDefinition(tableName) {
     const definition = tableDefinitions[tableName];
     if (!definition) {
@@ -351,5 +384,6 @@ module.exports = {
     insertIntoTable,
     updateTableRecords,
     countTableRows,
-    tableDefinitions
+    tableDefinitions,
+    ensureSeedData
 };
