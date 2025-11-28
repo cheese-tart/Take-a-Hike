@@ -181,7 +181,7 @@ async function fetchHikeTablesFromDb() {
                     AND h2.Duration = h1.Duration
             `;
             const result = await connection.execute(query);
-            console.log('Fetched hikes from DB:', result.rows); // Debugging
+            // console.log('Fetched hikes from DB:', result.rows); // Debugging
             return result.rows;
         });
     } catch (err) {
