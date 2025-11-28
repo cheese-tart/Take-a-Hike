@@ -47,7 +47,7 @@ router.post("/insert-appuser", async (req, res) => {
         const insertResult = await appService.insertAppUser(
             UserID,
             Name,
-            PreferenceID ?? null, // allow null for optional preference
+            PreferenceID,
             Email,
             PhoneNumber
         );

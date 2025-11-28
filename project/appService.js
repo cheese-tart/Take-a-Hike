@@ -175,22 +175,30 @@ async function fetchHikeTablesFromDb() {
 }
 
  // 1. INSERT
- async function insertAppUser(uid, name, pid, email, pnum) {
-     return await withOracleDB(async (connection) => {
-         const result = await connection.execute(
-             `
-             INSERT INTO AppUser (uid, name, pid, email, pnum)
-             VALUES (:uid, :name, :pid, :email, :pnum)
-             `,
-             [uid, name, pid, email, pnum],
-             { autoCommit: true }
-         );
+async function insertAppUser(uid, name, pid, email, pnum) {
+    return await withOracleDB(async (connection) => {
+        const result = await connection.execute(
+            // 1. UPDATED SQL: Changed :uid to :u_id to avoid "ORA-01745"
+            `INSERT INTO AppUser (UserID, Name, PreferenceID, Email, PhoneNumber)
+             VALUES (:u_id, :user_name, :pid, :email, :pnum)`,
+            
+            // 2. UPDATED DATA: Using an Object {} to match the names above
+            {
+                u_id: uid,
+                user_name: name,
+                pid: pid,
+                email: email,
+                pnum: pnum
+            },
+            { autoCommit: true }
+        );
 
-         return result.rowsAffected && result.rowsAffected > 0;
-     }).catch(() => {
-         return false;
-     });
- }
+        return result.rowsAffected && result.rowsAffected > 0;
+    }).catch((err) => {
+        console.error("DB Error:", err);
+        return false;
+    });
+}
 
  // 1. INSERT
  async function insertPreference(pid, dist, dur, elev, diff) {
