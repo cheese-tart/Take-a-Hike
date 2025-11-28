@@ -20,6 +20,16 @@ router.get('/usertable', async (req, res) => {
     res.json({data: tableContent});
 });
 
+router.get('/hiketable', async (req, res) => {
+    try {
+        const hikes = await appService.fetchHikeTablesFromDb();
+        res.json({ data: hikes });
+    } catch (err) {
+        console.error('Error in router /hiketable route:', err);
+        res.status(500).json({ error: 'Failed to fetch hikes' });
+    }
+});
+
 router.post("/initiate-demotable", async (req, res) => {
     const initiateResult = await appService.initiateDemotable();
     if (initiateResult) {

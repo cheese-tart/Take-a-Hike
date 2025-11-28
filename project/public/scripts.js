@@ -66,6 +66,44 @@ async function fetchAndDisplayUsers() {
 // Run the function once page is loaded
 window.addEventListener('DOMContentLoaded', fetchAndDisplayUsers);
 
+async function fetchAndDisplayHikes() {
+    const tableElement = document.getElementById('hiketable');
+    const tableBody = tableElement.querySelector('tbody');
+
+    try {
+        const response = await fetch('/hiketable', { method: 'GET' });
+
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(`HTTP error ${response.status}: ${text}`);
+        }
+
+        const responseData = await response.json();
+        const hikes = responseData.data;
+
+        // Clear old rows
+        if (tableBody) {
+            tableBody.innerHTML = '';
+        }
+
+        // Populate table
+        hikes.forEach(hike => {
+            const row = tableBody.insertRow();
+            hike.forEach((field, index) => {
+                const cell = row.insertCell(index);
+                cell.textContent = field ?? '';
+            });
+        });
+
+        console.log('Displayed hikes in table:', hikes);
+
+    } catch (err) {
+        console.error('Error fetching hikes:', err);
+    }
+}
+
+
+
 // This function resets or initializes the demotable.
 async function resetDemotable() {
     const response = await fetch("/initiate-demotable", {
@@ -162,17 +200,23 @@ async function countDemotable() {
 // ---------------------------------------------------------------
 // Initializes the webpage functionalities.
 // Add or remove event listeners based on the desired functionalities.
-window.onload = function() {
-    checkDbConnection();
-    fetchTableData();
+window.onload = async function() {
+    try {
+        await checkDbConnection(); // if this returns a promise
+        // await fetchTableData();    // wait for both table fetches
+        await fetchAndDisplayUsers();
+        await fetchAndDisplayHikes();
+    } catch (err) {
+        console.error('Error during page load:', err);
+    }
+
     document.getElementById("resetDemotable").addEventListener("click", resetDemotable);
     document.getElementById("insertDemotable").addEventListener("submit", insertDemotable);
     document.getElementById("updataNameDemotable").addEventListener("submit", updateNameDemotable);
     document.getElementById("countDemotable").addEventListener("click", countDemotable);
 };
 
-// General function to refresh the displayed table data. 
-// You can invoke this after any table-modifying operation to keep consistency.
-function fetchTableData() {
-    fetchAndDisplayUsers();
+// Refresh both tables
+async function fetchTableData() {
+    
 }

@@ -85,19 +85,7 @@ const oracledb = require('oracledb');
      });
  }
 
-async function fetchAppUserFromDb() {
-    try {
-        
-        return await withOracleDB(async (connection) => {
-            const result = await connection.execute('SELECT * FROM AppUser'); // removed semicolon
-            return result.rows;
-        });
-        
-    } catch (err) {
-        console.error('Error fetching AppUser:', err);
-        return [];
-    }
-}
+
 
  async function initiateDemotable() {
      return await withOracleDB(async (connection) => {
@@ -145,6 +133,62 @@ async function fetchAppUserFromDb() {
          return false;
      });
  }
+
+
+
+
+
+
+
+
+
+// Fetch All Tables 
+async function fetchAppUserFromDb() {
+    try {
+        
+        return await withOracleDB(async (connection) => {
+            const result = await connection.execute('SELECT * FROM AppUser'); // removed semicolon
+            return result.rows;
+        });
+        
+    } catch (err) {
+        console.error('Error fetching AppUser:', err);
+        return [];
+    }
+}
+
+async function fetchHikeTablesFromDb() {
+    try {
+        return await withOracleDB(async (connection) => {
+            // Join Hike1 and Hike2 for normalized display
+            const query = `
+                SELECT 
+                    h2.HikeID,
+                    h2.Name,
+                    h2.Season,
+                    h2.TrailCondition,
+                    h1.Kind,
+                    h1.Distance,
+                    h1.Elevation,
+                    h1.Duration,
+                    h1.Difficulty,
+                    h2.LocationID
+                FROM Hike2 h2
+                JOIN Hike1 h1
+                    ON h2.Kind = h1.Kind
+                    AND h2.Distance = h1.Distance
+                    AND h2.Elevation = h1.Elevation
+                    AND h2.Duration = h1.Duration
+            `;
+            const result = await connection.execute(query);
+            console.log('Fetched hikes from DB:', result.rows); // Debugging
+            return result.rows;
+        });
+    } catch (err) {
+        console.error('Error fetching Hikes:', err);
+        return [];
+    }
+}
 
  // 1. INSERT
  async function insertPreference(pid, dist, dur, elev, diff) {
@@ -389,6 +433,7 @@ async function fetchAppUserFromDb() {
     updateAppUser, 
     deleteAppUser, 
     fetchAppUserFromDb,
+    fetchHikeTablesFromDb,
     selectHike,
     projectHike,
     findUsersWhoHiked,
