@@ -105,6 +105,15 @@ const oracledb = require('oracledb');
 //      });
 //  }
 
+//  async function countDemotable() {
+//      return await withOracleDB(async (connection) => {
+//          const result = await connection.execute('SELECT Count(*) FROM DEMOTABLE');
+//          return result.rows[0][0];
+//      }).catch(() => {
+//          return -1;
+//      });
+//  }
+
  // 1. INSERT
  async function insertAppUser(uid, name, pid, email, pnum) {
      return await withOracleDB(async (connection) => {
@@ -341,7 +350,7 @@ const oracledb = require('oracledb');
 }
 
 // 10. DIVISION
- async function findHikeByRating() {
+ async function findUsersWhoHikedEveryHike() {
      return await withOracleDB(async (connection) => {
         const result = await connection.execute(`
             SELECT u.Name
@@ -359,20 +368,17 @@ const oracledb = require('oracledb');
     })
 }
 
- async function countDemotable() {
-     return await withOracleDB(async (connection) => {
-         const result = await connection.execute('SELECT Count(*) FROM DEMOTABLE');
-         return result.rows[0][0];
-     }).catch(() => {
-         return -1;
-     });
- }
-
  module.exports = {
-     testOracleConnection,
-     fetchDemotableFromDb,
-     initiateDemotable, 
-     insertDemotable, 
-     updateNameDemotable, 
-     countDemotable
+    testOracleConnection,
+    insertAppUser,
+    insertPreference, 
+    updateAppUser, 
+    deleteAppUser, 
+    selectHike,
+    projectHike,
+    findUsersWhoHiked,
+    findAvgDiffPerSeason,
+    findSafeHikes,
+    findGoodConditionHikes,
+    findHikeByRating: findUsersWhoHikedEveryHike
  };
