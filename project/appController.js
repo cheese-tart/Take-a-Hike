@@ -1,80 +1,68 @@
 const express = require('express');
-const appService = require('./appService');
+ const appService = require('./appService');
 
-const router = express.Router();
+ const router = express.Router();
 
-function respondWithError(res, err, defaultMessage = 'Operation failed') {
-    const statusCode = err && err.message ? 400 : 500;
-    res.status(statusCode).json({
-        success: false,
-        message: err?.message || defaultMessage
-    });
-}
+ // ----------------------------------------------------------
+ // API endpoints
+ // Modify or extend these routes based on your project's needs.
+ router.get('/check-db-connection', async (req, res) => {
+     const isConnect = await appService.testOracleConnection();
+     if (isConnect) {
+         res.send('connected');
+     } else {
+         res.send('unable to connect');
+     }
+ });
 
-// ----------------------------------------------------------
-// Core demo routes used by the current frontend
-router.get('/check-db-connection', async (req, res) => {
-    const isConnect = await appService.testOracleConnection();
-    if (isConnect) {
-        res.send('connected');
-    } else {
-        res.send('unable to connect');
-    }
-});
+ router.get('/demotable', async (req, res) => {
+     const tableContent = await appService.fetchDemotableFromDb();
+     res.json({data: tableContent});
+ });
 
-const managedTables = Object.keys(appService.tableDefinitions || {});
+ router.post("/initiate-demotable", async (req, res) => {
+     const initiateResult = await appService.initiateDemotable();
+     if (initiateResult) {
+         res.json({ success: true });
+     } else {
+         res.status(500).json({ success: false });
+     }
+ });
 
-managedTables.forEach((tableName) => {
-    const slug = tableName.toLowerCase();
+ router.post("/insert-demotable", async (req, res) => {
+     const { id, name } = req.body;
+     const insertResult = await appService.insertDemotable(id, name);
+     if (insertResult) {
+         res.json({ success: true });
+     } else {
+         res.status(500).json({ success: false });
+     }
+ });
 
-    router.get(`/${slug}`, async (req, res) => {
-        try {
-            const data = await appService.fetchTableRecords(tableName);
-            res.json({ success: true, data });
-        } catch (err) {
-            respondWithError(res, err, `Failed to fetch ${tableName}`);
-        }
-    });
+ router.post("/update-name-demotable", async (req, res) => {
+     const { oldName, newName } = req.body;
+     const updateResult = await appService.updateNameDemotable(oldName, newName);
+     if (updateResult) {
+         res.json({ success: true });
+     } else {
+         res.status(500).json({ success: false });
+     }
+ });
 
-    router.post(`/initiate-${slug}`, async (req, res) => {
-        try {
-            const initResult = await appService.initiateTable(tableName);
-            if (initResult) {
-                res.json({ success: true });
-            } else {
-                res.status(500).json({ success: false });
-            }
-        } catch (err) {
-            respondWithError(res, err, `Failed to initiate ${tableName}`);
-        }
-    });
+ router.get('/count-demotable', async (req, res) => {
+     const tableCount = await appService.countDemotable();
+     if (tableCount >= 0) {
+         res.json({ 
+             success: true,  
+             count: tableCount
+         });
+     } else {
+         res.status(500).json({ 
+             success: false, 
+             count: tableCount
+         });
+     }
+ });
 
-    router.post(`/insert-${slug}`, async (req, res) => {
-        try {
-            const insertResult = await appService.insertIntoTable(tableName, req.body);
-            if (insertResult) {
-                res.json({ success: true });
-            } else {
-                res.status(500).json({ success: false });
-            }
-        } catch (err) {
-            respondWithError(res, err, `Failed to insert into ${tableName}`);
-        }
-    });
 
-    router.post(`/update-${slug}`, async (req, res) => {
-        const { criteria, updates } = req.body || {};
-        try {
-            const updateResult = await appService.updateTableRecords(tableName, criteria, updates);
-            if (updateResult) {
-                res.json({ success: true });
-            } else {
-                res.status(404).json({ success: false, message: 'No rows updated' });
-            }
-        } catch (err) {
-            respondWithError(res, err, `Failed to update ${tableName}`);
-        }
-    });
-});
-
-module.exports = router;
+ module.exports = router;
