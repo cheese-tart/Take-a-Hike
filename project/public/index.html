@@ -67,6 +67,29 @@
 
     <br><hr><br> <!-- ========================================================================= -->
 
+    <h3>Insert New User</h3>
+<form id="insertAppUserForm">
+    <label for="insertUserID">User ID:</label>
+    <input type="number" id="insertUserID" placeholder="User ID" required>
+
+    <label for="insertName">Name:</label>
+    <input type="text" id="insertName" placeholder="Name" required>
+
+    <label for="insertPreferenceID">Preference ID (optional):</label>
+    <input type="number" id="insertPreferenceID" placeholder="Preference ID">
+
+    <label for="insertEmail">Email:</label>
+    <input type="email" id="insertEmail" placeholder="Email" required>
+
+    <label for="insertPhoneNumber">Phone Number:</label>
+    <input type="text" id="insertPhoneNumber" placeholder="Phone Number" required>
+
+    <button type="submit">Insert User</button>
+</form>
+<p id="insertUserResultMsg"></p>
+
+
+
     <h2>Reset Demotable</h2>
     <p>If you wish to reset the table press on the reset button. If this is the first time you're running this page, you MUST use reset</p>
     <button id="resetDemotable"> reset </button> <br>

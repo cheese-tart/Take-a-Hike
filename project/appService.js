@@ -116,23 +116,7 @@ const oracledb = require('oracledb');
      });
  }
 
- // 1. INSERT
- async function insertAppUser(uid, name, pid, email, pnum) {
-     return await withOracleDB(async (connection) => {
-         const result = await connection.execute(
-             `
-             INSERT INTO AppUser (uid, name, pid, email, pnum)
-             VALUES (:uid, :name, :pid, :email, :pnum)
-             `,
-             [uid, name, pid, email, pnum],
-             { autoCommit: true }
-         );
 
-         return result.rowsAffected && result.rowsAffected > 0;
-     }).catch(() => {
-         return false;
-     });
- }
 
 
 
@@ -189,6 +173,24 @@ async function fetchHikeTablesFromDb() {
         return [];
     }
 }
+
+ // 1. INSERT
+ async function insertAppUser(uid, name, pid, email, pnum) {
+     return await withOracleDB(async (connection) => {
+         const result = await connection.execute(
+             `
+             INSERT INTO AppUser (uid, name, pid, email, pnum)
+             VALUES (:uid, :name, :pid, :email, :pnum)
+             `,
+             [uid, name, pid, email, pnum],
+             { autoCommit: true }
+         );
+
+         return result.rowsAffected && result.rowsAffected > 0;
+     }).catch(() => {
+         return false;
+     });
+ }
 
  // 1. INSERT
  async function insertPreference(pid, dist, dur, elev, diff) {

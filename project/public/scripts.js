@@ -120,32 +120,44 @@ async function resetDemotable() {
     }
 }
 
-// Inserts new records into the demotable.
-async function insertDemotable(event) {
+// Inserts new records into the AppUser table
+async function insertAppUser(event) {
     event.preventDefault();
 
-    const idValue = document.getElementById('insertId').value;
-    const nameValue = document.getElementById('insertName').value;
+    const userID = document.getElementById('insertUserID').value;
+    const name = document.getElementById('insertName').value;
+    const preferenceID = document.getElementById('insertPreferenceID').value || null; // optional
+    const email = document.getElementById('insertEmail').value;
+    const phoneNumber = document.getElementById('insertPhoneNumber').value;
 
-    const response = await fetch('/insert-demotable', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            id: idValue,
-            name: nameValue
-        })
-    });
+    try {
+        const response = await fetch('/insert-appuser', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                UserID: userID,
+                Name: name,
+                PreferenceID: preferenceID,
+                Email: email,
+                PhoneNumber: phoneNumber
+            })
+        });
 
-    const responseData = await response.json();
-    const messageElement = document.getElementById('insertResultMsg');
+        const responseData = await response.json();
+        const messageElement = document.getElementById('insertUserResultMsg');
 
-    if (responseData.success) {
-        messageElement.textContent = "Data inserted successfully!";
-        fetchTableData();
-    } else {
-        messageElement.textContent = "Error inserting data!";
+        if (responseData.success) {
+            messageElement.textContent = "User inserted successfully!";
+            fetchTableData(); // refresh tables
+        } else {
+            messageElement.textContent = "Error inserting user!";
+        }
+    } catch (err) {
+        console.error('Error inserting user:', err);
+        const messageElement = document.getElementById('insertUserResultMsg');
+        messageElement.textContent = "Error inserting user!";
     }
 }
 
@@ -211,7 +223,7 @@ window.onload = async function() {
     }
 
     document.getElementById("resetDemotable").addEventListener("click", resetDemotable);
-    document.getElementById("insertDemotable").addEventListener("submit", insertDemotable);
+    document.getElementById("insertAppUserForm").addEventListener("submit", insertAppUser);
     document.getElementById("updataNameDemotable").addEventListener("submit", updateNameDemotable);
     document.getElementById("countDemotable").addEventListener("click", countDemotable);
 };

@@ -39,12 +39,26 @@ router.post("/initiate-demotable", async (req, res) => {
     }
 });
 
-router.post("/insert-demotable", async (req, res) => {
-    const { id, name } = req.body;
-    const insertResult = await appService.insertDemotable(id, name);
-    if (insertResult) {
-        res.json({ success: true });
-    } else {
+// In your appController.js
+router.post("/insert-appuser", async (req, res) => {
+    const { UserID, Name, PreferenceID, Email, PhoneNumber } = req.body;
+
+    try {
+        const insertResult = await appService.insertAppUser(
+            UserID,
+            Name,
+            PreferenceID ?? null, // allow null for optional preference
+            Email,
+            PhoneNumber
+        );
+
+        if (insertResult) {
+            res.json({ success: true });
+        } else {
+            res.status(500).json({ success: false });
+        }
+    } catch (err) {
+        console.error('Error inserting AppUser:', err);
         res.status(500).json({ success: false });
     }
 });
