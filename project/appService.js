@@ -76,43 +76,57 @@ const oracledb = require('oracledb');
      });
  }
 
-//  async function fetchDemotableFromDb() {
-//      return await withOracleDB(async (connection) => {
-//          const result = await connection.execute('SELECT * FROM DEMOTABLE');
-//          return result.rows;
-//      }).catch(() => {
-//          return [];
-//      });
-//  }
+ async function fetchDemotableFromDb() {
+     return await withOracleDB(async (connection) => {
+         const result = await connection.execute('SELECT * FROM DEMOTABLE');
+         return result.rows;
+     }).catch(() => {
+         return [];
+     });
+ }
 
-//  async function initiateDemotable() {
-//      return await withOracleDB(async (connection) => {
-//          try {
-//              await connection.execute(`DROP TABLE DEMOTABLE`);
-//          } catch(err) {
-//              console.log('Table might not exist, proceeding to create...');
-//          }
+async function fetchAppUserFromDb() {
+    try {
+        
+        return await withOracleDB(async (connection) => {
+            const result = await connection.execute('SELECT * FROM AppUser'); // removed semicolon
+            return result.rows;
+        });
+        
+    } catch (err) {
+        console.error('Error fetching AppUser:', err);
+        return [];
+    }
+}
 
-//          const result = await connection.execute(`
-//              CREATE TABLE DEMOTABLE (
-//              id NUMBER PRIMARY KEY,
-//                  name VARCHAR2(20)
-//              )
-//          `);
-//          return true;
-//      }).catch(() => {
-//          return false;
-//      });
-//  }
+ async function initiateDemotable() {
+     return await withOracleDB(async (connection) => {
+         try {
+             await connection.execute(`DROP TABLE DEMOTABLE`);
+         } catch(err) {
+             console.log('Table might not exist, proceeding to create...');
+         }
 
-//  async function countDemotable() {
-//      return await withOracleDB(async (connection) => {
-//          const result = await connection.execute('SELECT Count(*) FROM DEMOTABLE');
-//          return result.rows[0][0];
-//      }).catch(() => {
-//          return -1;
-//      });
-//  }
+         const result = await connection.execute(`
+             CREATE TABLE DEMOTABLE (
+             id NUMBER PRIMARY KEY,
+                 name VARCHAR2(20)
+             )
+         `);
+         return true;
+     }).catch(() => {
+         return false;
+     });
+ }
+
+ async function countDemotable() {
+     return await withOracleDB(async (connection) => {
+         const result = await connection.execute('SELECT Count(*) FROM DEMOTABLE');
+         return result.rows[0][0];
+     }).catch(() => {
+         return -1;
+     });
+ }
 
  // 1. INSERT
  async function insertAppUser(uid, name, pid, email, pnum) {
@@ -374,6 +388,7 @@ const oracledb = require('oracledb');
     insertPreference, 
     updateAppUser, 
     deleteAppUser, 
+    fetchAppUserFromDb,
     selectHike,
     projectHike,
     findUsersWhoHiked,
