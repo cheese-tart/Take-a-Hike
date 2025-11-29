@@ -187,6 +187,32 @@ async function updateAppUser(event) {
     }
 }
 
+// Delete AppUser
+async function deleteAppUserHandler(event) {
+    event.preventDefault();
+
+    const uid = document.getElementById('deleteUid').value;
+
+    const response = await fetch('/delete-appuser', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid })
+    });
+
+    const result = await response.json();
+    const messageElem = document.getElementById('deleteResultMsg');
+
+    if (result.success) {
+        messageElem.textContent = `User ${uid} deleted successfully!`;
+        fetchAndDisplayUsers(); // Refresh table after deletion
+    } else {
+        messageElem.textContent = `Error deleting user: ${result.message || ''}`;
+    }
+}
+
+// Attach event listener
+document.getElementById("deleteAppUserForm").addEventListener("submit", deleteAppUserHandler);
+
 // Attach event listener
 document.getElementById("updateAppUserForm").addEventListener("submit", updateAppUser);
 

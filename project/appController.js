@@ -74,13 +74,20 @@ router.post("/update-appuser", async (req, res) => {
     }
 });
 
-router.post("/update-name-demotable", async (req, res) => {
-    const { oldName, newName } = req.body;
-    const updateResult = await appService.updateNameDemotable(oldName, newName);
-    if (updateResult) {
+// DELETE user route
+router.post("/delete-appuser", async (req, res) => {
+    const { uid } = req.body;
+
+    if (!uid) {
+        return res.status(400).json({ success: false, message: "UserID required" });
+    }
+
+    const deleteResult = await appService.deleteAppUser(uid);
+
+    if (deleteResult) {
         res.json({ success: true });
     } else {
-        res.status(500).json({ success: false });
+        res.status(500).json({ success: false, message: "Failed to delete user" });
     }
 });
 

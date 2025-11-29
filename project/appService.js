@@ -266,51 +266,39 @@ async function updateAppUser(uid, newName, email, pnum) {
 }
 
 // 3. DELETE
- async function deleteAppUser(uid) {
-     return await withOracleDB(async (connection) => {
-         const result = await connection.execute(
-            `
-            DELETE FROM AppUser
-            WHERE UserID = :uid
-            `,
-            [uid],
+async function deleteAppUser(uid) {
+    if (!uid) return false;
+
+    return await withOracleDB(async (connection) => {
+        // Delete Feedback first
+        await connection.execute(
+            `DELETE FROM Feedback WHERE UserID = :uid`,
+            { uid },
             { autoCommit: true }
-         );
+        );
 
-         await connection.execute(
-            `
-            DELETE FROM Preference
-            WHERE UserID = :uid
-            `,
-            [uid],
+        // Delete Preference if linked
+        await connection.execute(
+            `DELETE FROM Preference WHERE PreferenceID = (SELECT PreferenceID FROM AppUser WHERE UserID = :uid)`,
+            { uid },
             { autoCommit: true }
-         );
+        );
 
-         await connection.execute(
-            `
-            DELETE FROM Feedback
-            WHERE UserID = :uid
-            `,
-            [uid],
+        // Delete main user
+        const result = await connection.execute(
+            `DELETE FROM AppUser WHERE UserID = :uid`,
+            { uid },
             { autoCommit: true }
-         );
-
-         const APPUSERS = await connection.execute(
-            `
-            SELECT *
-            FROM AppUser
-            `
-         );
-
-        console.log(APPUSERS.rows);
+        );
 
         if (result.rowsAffected === 0) {
-            console.error('No user found with UserID: ${uid}');
+            console.error(`No user found with UserID: ${uid}`);
             return false;
         }
 
         return true;
-    }).catch(() => {
+    }).catch((err) => {
+        console.error("DB error:", err);
         return false;
     });
 }
