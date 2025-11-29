@@ -8,7 +8,23 @@
     <!-- Link to the external CSS stylesheet. Uncomment if you wish to customize or add styling. -->
     <!-- <link rel="stylesheet" href="styles.css">   -->
 
-    <title>Database Application</title>
+    <title>Hike Reviewer</title>
+   <style>
+    h2 {
+        text-align: center;
+    }
+
+    table {
+        margin-left: auto;
+        margin-right: auto;
+        border-collapse: collapse;
+    }
+
+    table th, table td {
+        padding: 8px 12px;
+        text-align: center;
+    }
+</style>
 </head>
 <body>
     <!-- ===================================================================================== -->
@@ -23,144 +39,220 @@
     </h1>
 
     <br><hr><br> <!-- ========================================================================= -->
-
+<h1>Hike Tracker</h1>
+    <div class="authors">Authors: Jericho, Dilreet, Chester</div>
     <!-- Show 'Demotable'. 
         Data will be fetched and inserted here dynamically using JavaScript. -->
-    <h2>Show UserTable</h2>
-    <table id="demotable" border="1">
-        <thead>
-            <tr>
-                <!--Table head, need to be adjusted accordingly to align with your own.-->
-                <th>User ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-            </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
+    <h2>AppUser Table</h2>
+<table id="usertable" border="1">
+    <thead>
+        <tr>
+            <th>UserID</th>
+            <th>Name</th>
+            <th>PreferenceID</th>
+            <th>Email</th>
+            <th>PhoneNumber</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+
 
     <br><hr><br> <!-- ========================================================================= -->
 
-    <h2>Show Hikes</h2>
-    <table id="hikeTable" border="1">
-        <thead>
-            <tr>
-                <th>Hike ID</th>
-                <th>Name</th>
-                <th>Kind</th>
-                <th>Season</th>
-                <th>Trail Condition</th>
-                <th>Duration</th>
-                <th>Elevation</th>
-                <th>Distance</th>
-                <th>Location ID</th>
-            </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
-
-    <br><hr><br> <!-- ========================================================================= -->
-
-    <h2>Reset UserTable</h2>
-    <p>If you wish to reset the table press on the reset button. If this is the first time you're running this page, you MUST use reset</p>
-    <button id="resetDemotable"> reset </button> <br>
-    <!-- A placeholder to display messages related to the reset operation. -->
-    <div id="resetResultMsg"></div>
-
-    <br><hr><br> <!-- ========================================================================= -->
-
-    <h2>Register a New AppUser</h2>
-    <p>Provide the new user's ID, name, email, and phone number to insert them into the AppUser table.</p>
-    <form id="insertDemotable">
-        User ID: <input type="number" id="insertId" placeholder="Enter User ID" required> <br><br>
-        Name: <input type="text" id="insertName" placeholder="Enter Full Name" maxlength="20" required> <br><br>
-        Email: <input type="email" id="insertEmail" placeholder="Enter Email Address" maxlength="30" required> <br><br>
-        Phone Number: <input type="text" id="insertPhone" placeholder="Enter Phone Number" maxlength="20" required> <br><br>
-
-        <button type="submit"> register </button> <br>
-    </form>
-    <div id="insertResultMsg"></div>
-
-    <br><hr><br> <!-- ========================================================================= -->
-
-    <h2>Update Name in UserTable</h2>
-    <p>The values are case sensitive and if you enter in the wrong case, the update statement will not do anything.</p>
-    <form id="updataNameDemotable">
-        Old Name: <input type="text" id="updateOldName" placeholder="Enter Old Name" required> <br><br>
-        New Name: <input type="text" id="updateNewName" placeholder="Enter New Name" maxlength="20"> <br><br>
-
-        <button type="submit"> update </button> <br>
-    </form>
-    <!-- A placeholder to display messages related to the update operation. -->
-    <div id="updateNameResultMsg"></div>
-
-    <br><hr><br> <!-- ========================================================================= -->
-
-    <h2>Count the Tuples in UserTable</h2>
-    <button id="countDemotable"> count </button> <br><br>
-    <!-- A placeholder to display the count result. -->
-    <div id="countResultMsg"></div> <br>
-
-    <!-- ===================================================================================== -->
-    <br><hr><br> <!-- ========================================================================= -->
-
-    <!-- Show 'HikeTable'. 
-        Data will be fetched and inserted here dynamically using JavaScript. -->
-        <h2>Show HikeTable</h2>
+    <h2>Hikes Table</h2>
         <table id="hiketable" border="1">
             <thead>
                 <tr>
-                    <!-- Table headers based on Hike1 and Hike2 schemas -->
-                    <th>Hike ID</th>
+                    <th>HikeID</th>
                     <th>Name</th>
-                    <th>Kind</th>
-                    <th>Distance (m)</th>
-                    <th>Elevation (m)</th>
-                    <th>Duration (min)</th>
-                    <th>Difficulty (1-10)</th>
                     <th>Season</th>
-                    <th>Trail Condition (1-10)</th>
+                    <th>TrailCondition</th>
+                    <th>Kind</th>
+                    <th>Distance</th>
+                    <th>Elevation</th>
+                    <th>Duration</th>
+                    <th>Difficulty</th>
+                    <th>LocationID</th>
                 </tr>
             </thead>
-            <tbody id="hiketable-body">
-                <tr>
-                    <td colspan="9">Loading hike data...</td>
-                </tr>
+            <tbody>
             </tbody>
         </table>
 
     <br><hr><br> <!-- ========================================================================= -->
-    <h2>Reset HikeTable</h2>
-    <p>Press the reset button to re-initialize the Hike tables.</p>
-    <button id="resetHikeTable"> Reset Hikes </button> <br>
-    <div id="resetHikeResultMsg" style="margin-top: 5px;"></div>
+
+    <h3>Number 1: Insert New User</h3>
+<form id="insertAppUserForm">
+    <label for="insertUserID">User ID:</label>
+    <input type="number" id="insertUserID" placeholder="User ID" required>
+
+    <label for="insertName">Name:</label>
+    <input type="text" id="insertName" placeholder="Name" required>
+
+    <label for="insertPreferenceID">Preference ID (optional):</label>
+    <input type="number" id="insertPreferenceID" placeholder="Preference ID">
+
+    <label for="insertEmail">Email:</label>
+    <input type="email" id="insertEmail" placeholder="Email" required>
+
+    <label for="insertPhoneNumber">Phone Number:</label>
+    <input type="text" id="insertPhoneNumber" placeholder="Phone Number" required>
+
+    <button type="submit">Insert User</button>
+</form>
+<p id="insertUserResultMsg"></p>
+
+<br><hr><br> <!-- ========================================================================= -->
+
+<h3>Number 2: Update AppUser</h3>
+<form id="updateAppUserForm">
+    <label>User ID: <input type="number" id="updateUid" required></label><br>
+    <label>New Name: <input type="text" id="updateName"></label><br>
+    <label>New Email: <input type="email" id="updateEmail"></label><br>
+    <label>New Phone: <input type="text" id="updatePhone"></label><br>
+    <button type="submit">Update User</button>
+</form>
+<p id="updateResultMsg"></p>
+
+
+<br><hr><br> <!-- ========================================================================= -->
+<h3>Number 3: Delete AppUser</h3>
+<form id="deleteAppUserForm">
+    <label for="deleteUid">UserID to Delete:</label>
+    <input type="number" id="deleteUid" required>
+    <button type="submit">Delete User</button>
+</form>
+    <br><hr><br> <!-- ========================================================================= -->
+
+    <h3>Number 4 Select: Search Hikes</h3>
+
+<div>
+    <label>Kind: <input type="text" id="kindInput" placeholder="Loop, Out-and-Back, etc."></label>
+    <select id="kindLogical">
+        <option value="AND">AND</option>
+        <option value="OR">OR</option>
+    </select>
+    <select id="kindOperator">
+        <option value="=">=</option>
+        <option value="!=">!=</option>
+    </select>
+    <br>
+
+    <label>Distance: <input type="number" id="distanceInput" placeholder="Distance in km"></label>
+    <select id="distanceLogical">
+        <option value="AND">AND</option>
+        <option value="OR">OR</option>
+    </select>
+    <select id="distanceOperator">
+        <option value="=">=</option>
+        <option value=">">></option>
+        <option value="<"><</option>
+        <option value=">=">>=</option>
+        <option value="<="><=</option>
+        <option value="!=">!=</option>
+    </select>
+    <br>
+
+    <label>Elevation: <input type="number" id="elevationInput" placeholder="Elevation in m"></label>
+    <select id="elevationLogical">
+        <option value="AND">AND</option>
+        <option value="OR">OR</option>
+    </select>
+    <select id="elevationOperator">
+        <option value="=">=</option>
+        <option value=">">></option>
+        <option value="<"><</option>
+        <option value=">=">>=</option>
+        <option value="<="><=</option>
+        <option value="!=">!=</option>
+    </select>
+    <br>
+
+    <label>Duration: <input type="number" id="durationInput" placeholder="Duration in min"></label>
+    <select id="durationLogical">
+        <option value="AND">AND</option>
+        <option value="OR">OR</option>
+    </select>
+    <select id="durationOperator">
+        <option value="=">=</option>
+        <option value=">">></option>
+        <option value="<"><</option>
+        <option value=">=">>=</option>
+        <option value="<="><=</option>
+        <option value="!=">!=</option>
+    </select>
+    <br>
+
+    <button id="searchHikesBtn">Search Hikes</button>
+</div>
+
+<h3>Results:</h3>
+<div id="hikeResults"></div>
+
+    <br><hr><br> <!-- ========================================================================= -->
+    <h3>Number 5 Join</h3>
+    <div>
+    <label>Attributes to project: <input type="text" id="attributesInput" placeholder="e.g. h2.Name, h1.Difficulty"></label><br>
+    <button id="projectHikesBtn">Project Hikes</button>
+    </div>
+
+    <h4>Projected Results:</h4>
+    <div id="projectedResults"></div>
+
+    <br><hr><br> <!-- ========================================================================= -->
+    <h3>Number 6 Join</h3>
+    <div>
+        <label>Hike ID: <input type="number" id="hikeIdInput" placeholder="Enter HikeID"></label><br>
+        <button id="findUsersBtn">Find Users Who Hiked</button>
+    </div>
+
+    <h4>Users who hiked this trail:</h4>
+    <div id="usersResults"></div>
 
     <br><hr><br> <!-- ========================================================================= -->
 
-    <h2>Insert New Hike Record</h2>
-    <form id="insertHikeForm">
-        Hike ID: <input type="number" id="insertHikeID" placeholder="Hike ID" required> <br><br>
-        Name: <input type="text" id="insertName" placeholder="Trail Name" maxlength="20" required> <br><br>
-        Kind: <input type="text" id="insertKind" placeholder="Kind (e.g., Loop)" maxlength="20" required> <br><br>
-        Distance (m): <input type="number" id="insertDistance" placeholder="Distance in meters" required> <br><br>
-        Elevation (m): <input type="number" id="insertElevation" placeholder="Elevation gain in meters" required> <br><br>
-        Duration (min): <input type="number" id="insertDuration" placeholder="Duration in minutes" required> <br><br>
-        Difficulty (1-10): <input type="number" id="insertDifficulty" placeholder="Difficulty" min="1" max="10" required> <br><br>
-        Season: <input type="text" id="insertSeason" placeholder="Best Season" maxlength="20"> <br><br>
-        Trail Condition (1-10): <input type="number" id="insertTrailCondition" placeholder="Condition rating" min="1" max="10"> <br><br>
+    <h3>Number 7 aggregation</h3>
+    <div>
+    <button id="avgDiffBtn">Show Avg Difficulty per Season</button>
+    </div>
 
-        <button type="submit"> Insert Hike </button> <br>
-    </form>
-    <div id="insertHikeResultMsg" style="margin-top: 5px;"></div>
+    <h4>Average Difficulty per Season:</h4>
+    <div id="avgDiffResults"></div>
+    <br><hr><br> <!-- ========================================================================= -->
 
 
-    <br><hr><br>
+    <h3>Number 8 aggregation</h3>
+    <div>
+    <button id="safeHikesBtn">Show Safe Hikes</button>
+    </div>
 
+    <h4>Hikes with No Safety Hazards:</h4>
+    <div id="safeHikesResults"></div>
+    <br><hr><br> <!-- ========================================================================= -->
+     <h3>Number 9 Nested aggregation with GROUP BY</h3>
+    <div>
+    <button id="goodCondBtn">Show hikes with good conditions</button>
+    </div>
 
+    <h4>Average Difficulty per Season:</h4>
+    <div id="goodCondResults"></div>
 
+    <br><hr><br> <!-- ========================================================================= -->
+
+    <h3>Number 10 Division</h3>
+    <div>
+    <button id="hikedAllHikesBtn">Show Users who hiked all hikes</button>
+    </div>
+
+    <h4>Users who hiked all hikes:</h4>
+    <div id="hikedAllHikesResults"></div>
+
+    <br><hr><br> <!-- ========================================================================= -->
+
+    <!-- ===================================================================================== -->
     <!-- External JavaScript file that contains the functionality/logic for the operations above. -->
     <script src="scripts.js"></script>
 </body>

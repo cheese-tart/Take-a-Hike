@@ -36,31 +36,73 @@ async function checkDbConnection() {
     });
 }
 
-// Fetches data from the demotable and displays it.
+// Fetches AppUser data from your backend and displays it in the table
 async function fetchAndDisplayUsers() {
-    const tableElement = document.getElementById('demotable');
+    const tableBody = document.querySelector('#usertable tbody');
+
+    try {
+        const response = await fetch('/usertable', { method: 'GET' });
+        const responseData = await response.json(); // { data: [...] }
+
+        console.log('Received data from backend:', responseData); // debugging
+
+        // Clear old rows
+        tableBody.innerHTML = '';
+
+        // Loop through each user (array) and populate table
+        responseData.data.forEach(user => {
+            const row = tableBody.insertRow();
+
+            // Map columns by array index: [USERID, NAME, PREFERENCEID, EMAIL, PHONENUMBER]
+            [0, 1, 2, 3, 4].forEach(i => {
+                const cell = row.insertCell();
+                cell.textContent = user[i] ?? '';
+            });
+        });
+    } catch (err) {
+        console.error('Error fetching users:', err);
+    }
+}
+// Run the function once page is loaded
+window.addEventListener('DOMContentLoaded', fetchAndDisplayUsers);
+
+async function fetchAndDisplayHikes() {
+    const tableElement = document.getElementById('hiketable');
     const tableBody = tableElement.querySelector('tbody');
 
-    const response = await fetch('/demotable', {
-        method: 'GET'
-    });
+    try {
+        const response = await fetch('/hiketable', { method: 'GET' });
 
-    const responseData = await response.json();
-    const demotableContent = responseData.data;
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(`HTTP error ${response.status}: ${text}`);
+        }
 
-    // Always clear old, already fetched data before new fetching process.
-    if (tableBody) {
-        tableBody.innerHTML = '';
-    }
+        const responseData = await response.json();
+        const hikes = responseData.data;
 
-    demotableContent.forEach(user => {
-        const row = tableBody.insertRow();
-        user.forEach((field, index) => {
-            const cell = row.insertCell(index);
-            cell.textContent = field;
+        // Clear old rows
+        if (tableBody) {
+            tableBody.innerHTML = '';
+        }
+
+        // Populate table
+        hikes.forEach(hike => {
+            const row = tableBody.insertRow();
+            hike.forEach((field, index) => {
+                const cell = row.insertCell(index);
+                cell.textContent = field ?? '';
+            });
         });
-    });
+
+        console.log('Displayed hikes in table:', hikes);
+
+    } catch (err) {
+        console.error('Error fetching hikes:', err);
+    }
 }
+
+
 
 // This function resets or initializes the demotable.
 async function resetDemotable() {
@@ -78,38 +120,365 @@ async function resetDemotable() {
     }
 }
 
-// Inserts new records into the demotable.
-async function insertDemotable(event) {
+// Inserts new records into the AppUser table
+async function insertAppUser(event) {
     event.preventDefault();
 
-    const idValue = document.getElementById('insertId').value;
-    const nameValue = document.getElementById('insertName').value;
-    const emailValue = document.getElementById('insertEmail').value;
-    const phoneValue = document.getElementById('insertPhone').value;
+    const userID = document.getElementById('insertUserID').value;
+    const name = document.getElementById('insertName').value;
+    const preferenceID = document.getElementById('insertPreferenceID').value || null; // optional
+    const email = document.getElementById('insertEmail').value;
+    const phoneNumber = document.getElementById('insertPhoneNumber').value;
 
-    const response = await fetch('/insert-demotable', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            id: idValue,
-            name: nameValue,
-            email: emailValue,
-            phoneNumber: phoneValue
-        })
-    });
+    try {
+        const response = await fetch('/insert-appuser', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                UserID: userID,
+                Name: name,
+                PreferenceID: preferenceID,
+                Email: email,
+                PhoneNumber: phoneNumber
+            })
+        });
 
-    const responseData = await response.json();
-    const messageElement = document.getElementById('insertResultMsg');
+        const responseData = await response.json();
+        const messageElement = document.getElementById('insertUserResultMsg');
 
-    if (responseData.success) {
-        messageElement.textContent = "Data inserted successfully!";
-        fetchTableData();
-    } else {
-        messageElement.textContent = "Error inserting data!";
+        if (responseData.success) {
+            messageElement.textContent = "User inserted successfully!";
+            fetchTableData(); // refresh tables
+        } else {
+            messageElement.textContent = "Error inserting user!";
+        }
+    } catch (err) {
+        console.error('Error inserting user:', err);
+        const messageElement = document.getElementById('insertUserResultMsg');
+        messageElement.textContent = "Error inserting user!";
     }
 }
+
+// Update AppUser
+async function updateAppUser(event) {
+    event.preventDefault();
+
+    const uid = document.getElementById('updateUid').value;
+    const newName = document.getElementById('updateName').value || null;
+    const email = document.getElementById('updateEmail').value || null;
+    const pnum = document.getElementById('updatePhone').value || null;
+
+    const response = await fetch('/update-appuser', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid, newName, email, pnum })
+    });
+
+    const result = await response.json();
+    const messageElem = document.getElementById('updateResultMsg');
+
+    if (result.success) {
+        messageElem.textContent = "User updated successfully!";
+        fetchAndDisplayUsers(); // Refresh table after update
+    } else {
+        messageElem.textContent = "Error updating user!";
+    }
+}
+
+// Delete AppUser
+async function deleteAppUserHandler(event) {
+    event.preventDefault();
+
+    const uid = document.getElementById('deleteUid').value;
+
+    const response = await fetch('/delete-appuser', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid })
+    });
+
+    const result = await response.json();
+    const messageElem = document.getElementById('deleteResultMsg');
+
+    if (result.success) {
+        messageElem.textContent = `User ${uid} deleted successfully!`;
+        fetchAndDisplayUsers(); // Refresh table after deletion
+    } else {
+        messageElem.textContent = `Error deleting user: ${result.message || ''}`;
+    }
+}
+
+// select hikes 
+// 4. SELECT with AND/OR support (frontend version)
+async function selectHikes(filters) {
+    try {
+        const response = await fetch('/selectHike', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(filters)
+        });
+
+        if (!response.ok) {
+            await response.text(); 
+            throw new Error('Network response was not ok');
+        }
+
+        return await response.json();
+    } catch (err) {
+        return [];
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('searchHikesBtn');
+    const resultsContainer = document.getElementById('hikeResults');
+
+    if (!button || !resultsContainer) return;
+
+    button.addEventListener('click', async () => {
+        const filters = [];
+
+        const addFilter = (label, inputId, logicalId, operator = "=") => {
+            const inputElement = document.getElementById(inputId);
+            const logicalElement = document.getElementById(logicalId);
+
+            if (!inputElement || !logicalElement) return;
+
+            const value = inputElement.value.trim();
+            const logical = logicalElement.value;
+
+            if (value !== "") {
+                filters.push({
+                    attribute: label,
+                    operator,
+                    value: isNaN(value) ? value : Number(value),
+                    logical
+                });
+            }
+        };
+
+        addFilter("Kind", "kindInput", "kindLogical");
+        addFilter("Distance", "distanceInput", "distanceLogical");
+        addFilter("Elevation", "elevationInput", "elevationLogical");
+        addFilter("Duration", "durationInput", "durationLogical");
+
+        const hikes = await selectHikes(filters);
+
+        resultsContainer.innerHTML = hikes.length > 0
+            ? hikes.map(h => `<div>${h[0]}</div>`).join('')
+            : '<div>No hikes found</div>';
+    });
+});
+
+// Project Hikes 
+async function projectHikes(attributes) {
+    try {
+        const response = await fetch('/projectHike', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ attributes })
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const hikes = await response.json();
+        return hikes;
+    } catch (err) {
+        console.error('Error fetching projected hikes:', err);
+        return [];
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('projectHikesBtn');
+    const resultsContainer = document.getElementById('projectedResults');
+
+    button.addEventListener('click', async () => {
+        const attributes = document.getElementById('attributesInput').value.trim();
+
+        if (!attributes) {
+            resultsContainer.innerHTML = '<div>Please enter at least one attribute to project.</div>';
+            return;
+        }
+
+        const hikes = await projectHikes(attributes);
+
+        resultsContainer.innerHTML = hikes.length
+            ? hikes.map(row => `<div>${row.join(' | ')}</div>`).join('')
+            : '<div>No hikes found</div>';
+    });
+});
+
+// JOIN 
+async function getUsersWhoHiked(hid) {
+    try {
+        const response = await fetch('/findUsersWhoHiked', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ hid })
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const users = await response.json();
+        return users;
+    } catch (err) {
+        console.error('Error fetching users:', err);
+        return [];
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('findUsersBtn');
+    const resultsContainer = document.getElementById('usersResults');
+
+    button.addEventListener('click', async () => {
+        const hid = Number(document.getElementById('hikeIdInput').value);
+
+        if (!hid) {
+            resultsContainer.innerHTML = '<div>Please enter a valid HikeID.</div>';
+            return;
+        }
+
+        const users = await getUsersWhoHiked(hid);
+
+        resultsContainer.innerHTML = users.length
+            ? users.map(u => `<div>${u[0]}</div>`).join('')
+            : '<div>No users found for this hike.</div>';
+    });
+});
+
+// 7 aggregation 
+async function getAvgDiffPerSeason() {
+    try {
+        const response = await fetch('/avgDiffPerSeason', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const results = await response.json();
+        return results;
+    } catch (err) {
+        console.error('Error fetching avg difficulty:', err);
+        return [];
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('avgDiffBtn');
+    const resultsContainer = document.getElementById('avgDiffResults');
+
+    button.addEventListener('click', async () => {
+        const results = await getAvgDiffPerSeason();
+
+        resultsContainer.innerHTML = results.length
+            ? results.map(r => `<div>Season: ${r[0]}, Avg Difficulty: ${Number(r[1]).toFixed(2)}</div>`).join('')
+            : '<div>No data available</div>';
+    });
+});
+
+
+async function getSafeHikes() {
+    try {
+        const response = await fetch('/safeHikes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const hikes = await response.json();
+        return hikes;
+    } catch (err) {
+        console.error('Error fetching safe hikes:', err);
+        return [];
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('safeHikesBtn');
+    const resultsContainer = document.getElementById('safeHikesResults');
+
+    button.addEventListener('click', async () => {
+        const hikes = await getSafeHikes();
+
+        resultsContainer.innerHTML = hikes.length
+            ? hikes.map(h => `<div>${h[0]}</div>`).join('')
+            : '<div>No safe hikes found</div>';
+    });
+});
+
+// 9 Nested aggregation with GROUP BY
+async function getGoodCondHikes() {
+    try {
+        const response = await fetch('/good-condition-hikes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const results = await response.json();
+        return results;
+    } catch (err) {
+        console.error('Error fetching good condition hikes:', err);
+        return [];
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('goodCondBtn');
+    const resultsContainer = document.getElementById('goodCondResults');
+
+    button.addEventListener('click', async () => {
+        const results = await getGoodCondHikes();
+
+        resultsContainer.innerHTML = results.length
+            ? results.map(r => `<div>Name: ${r[0]}, Season: ${r[1]}, Trail Condition: ${Number(r[2])}</div>`).join('')
+            : '<div>No data available</div>';
+    });
+});
+
+// 10 Division
+async function findUsersWhoHikedAllHikes() {
+    try {
+        const response = await fetch('/users-who-hiked-every-hike', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const results = await response.json();
+        return results;
+    } catch (err) {
+        console.error('Error fetching users who hiked all hikes:', err);
+        return [];
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('hikedAllHikesBtn');
+    const resultsContainer = document.getElementById('hikedAllHikesResults');
+
+    button.addEventListener('click', async () => {
+        const results = await findUsersWhoHikedAllHikes();
+
+        resultsContainer.innerHTML = results.length
+            ? results.map(r => `<div>Name: ${r}</div>`).join('')
+            : '<div>No data available</div>';
+    });
+});
+
+// Attach event listener
+document.getElementById("deleteAppUserForm").addEventListener("submit", deleteAppUserHandler);
+
+// Attach event listener
+document.getElementById("updateAppUserForm").addEventListener("submit", updateAppUser);
 
 // Updates names in the demotable.
 async function updateNameDemotable(event) {
@@ -162,157 +531,23 @@ async function countDemotable() {
 // ---------------------------------------------------------------
 // Initializes the webpage functionalities.
 // Add or remove event listeners based on the desired functionalities.
-window.onload = function() {
-    checkDbConnection();
-    fetchTableData();
+window.onload = async function() {
+    try {
+        await checkDbConnection(); // if this returns a promise
+        // await fetchTableData();    // wait for both table fetches
+        await fetchAndDisplayUsers();
+        await fetchAndDisplayHikes();
+    } catch (err) {
+        console.error('Error during page load:', err);
+    }
+
     document.getElementById("resetDemotable").addEventListener("click", resetDemotable);
-    document.getElementById("insertDemotable").addEventListener("submit", insertDemotable);
+    document.getElementById("insertAppUserForm").addEventListener("submit", insertAppUser);
     document.getElementById("updataNameDemotable").addEventListener("submit", updateNameDemotable);
     document.getElementById("countDemotable").addEventListener("click", countDemotable);
 };
 
-// General function to refresh the displayed table data. 
-// You can invoke this after any table-modifying operation to keep consistency.
-function fetchTableData() {
-    fetchAndDisplayUsers();
-}
-
-
-// this is the hiketable implementation 
-async function fetchAndDisplayHikes() {
-    const tableElement = document.getElementById('hiketable');
-    const tableBody = tableElement.querySelector('tbody');
-
-    try {
-        const response = await fetch('/hiketable', {
-            method: 'GET'
-        });
-
-        const responseData = await response.json();
-        // Assuming success: true and data is an array of records
-        const hikeContent = responseData.data || []; 
-
-        if (tableBody) {
-            tableBody.innerHTML = '';
-        }
-
-        if (hikeContent.length === 0) {
-            const row = tableBody.insertRow();
-            const cell = row.insertCell();
-            cell.colSpan = 4; // Based on your HTML's current 4 columns
-            cell.textContent = 'No hike data found.';
-            return;
-        }
-
-        // Check if data is an array of objects (preferred) or array of arrays (common in DB responses)
-        if (typeof hikeContent[0] === 'object' && !Array.isArray(hikeContent[0])) {
-            // Data is an array of objects (e.g., [{HikeID: 1, Name: 'Trail A', ...}])
-            hikeContent.forEach(hike => {
-                const row = tableBody.insertRow();
-                
-                // IMPORTANT: The order of fields must correspond to the column index
-                // We are inserting the fields necessary for Hike1 and Hike2:
-                const fields = [
-                    hike.HikeID || 'N/A', 
-                    hike.Name || 'Unnamed', 
-                    hike.Kind || 'N/A', 
-                    hike.Distance || 'N/A', 
-                    hike.Elevation || 'N/A', 
-                    hike.Duration || 'N/A', 
-                    hike.Difficulty || 'N/A', 
-                    hike.Season || 'N/A', 
-                    hike.TrailCondition || 'N/A'
-                ];
-                
-                // Since your HTML only has 4 columns, only the first 4 fields will display
-                fields.slice(0, 4).forEach(field => {
-                    const cell = row.insertCell();
-                    cell.textContent = field;
-                });
-            });
-        } else {
-            // Data is an array of arrays (e.g., [['1', 'Trail A', ...]])
-            hikeContent.forEach(hikeRecord => {
-                const row = tableBody.insertRow();
-                // Slice to fit the 4 columns in the current HTML
-                hikeRecord.slice(0, 4).forEach((field) => {
-                    const cell = row.insertCell();
-                    cell.textContent = field;
-                });
-            });
-        }
-    } catch (error) {
-        console.error("Failed to fetch hike data:", error);
-        if (tableBody) {
-            tableBody.innerHTML = `<tr><td colspan="4" style="color:red;">Error loading data. See console.</td></tr>`;
-        }
-    }
-}
-
-
-async function resetHikeTable() {
-    const response = await fetch("/initiate-hiketable", {
-        method: 'POST'
-    });
-    const responseData = await response.json();
-    const messageElement = document.getElementById('resetHikeResultMsg');
-
-    if (responseData.success) {
-        messageElement.textContent = "HikeTable initiated successfully!";
-        fetchTableData(); // Refresh table
-    } else {
-        messageElement.textContent = `Error initiating HikeTable: ${responseData.message || 'Unknown error'}`;
-        console.error("Error initiating HikeTable:", responseData);
-    }
-}
-
-/**
- * Inserts a new hike record into the HikeTable.
- */
-async function insertHikeTable(event) {
-    event.preventDefault();
-
-    // Collect form data (must match HTML form IDs)
-    const hikeID = document.getElementById('insertHikeID').value;
-    const name = document.getElementById('insertName').value;
-    const kind = document.getElementById('insertKind').value;
-    const distance = document.getElementById('insertDistance').value;
-    const elevation = document.getElementById('insertElevation').value;
-    const duration = document.getElementById('insertDuration').value;
-    const difficulty = document.getElementById('insertDifficulty').value;
-    const season = document.getElementById('insertSeason').value;
-    const trailCondition = document.getElementById('insertTrailCondition').value;
-
-    try {
-        const response = await fetch('/insert-hiketable', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                HikeID: parseInt(hikeID),
-                Name: name,
-                Kind: kind,
-                Distance: parseInt(distance),
-                Elevation: parseInt(elevation),
-                Duration: parseInt(duration),
-                Difficulty: parseInt(difficulty),
-                Season: season,
-                TrailCondition: parseInt(trailCondition)
-            })
-        });
-
-        const responseData = await response.json();
-        const messageElement = document.getElementById('insertHikeResultMsg');
-
-        if (responseData.success) {
-            messageElement.textContent = `Hike "${name}" inserted successfully!`;
-            // Clear form
-            event.target.reset();
-            fetchTableData(); // Refresh table
-        } else {
-            messageElement.textContent = `Error inserting hike: ${responseData.message || 'Unknown error'}`;
-        }
-    } catch (err) {
-        document.getElementById('insertHikeResultMsg').textContent = `Request failed: ${err.message}`;
-        console.error("Insert request failed:", err);
-    }
+// Refresh both tables
+async function fetchTableData() {
+    
 }

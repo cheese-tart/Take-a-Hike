@@ -1,355 +1,514 @@
 const oracledb = require('oracledb');
-const fs = require('fs/promises');
-const path = require('path');
-const loadEnvFile = require('./utils/envUtil');
+ const loadEnvFile = require('./utils/envUtil');
 
-const envVariables = loadEnvFile('./.env');
-const sqlFilePath = path.join(__dirname, 'hiketracker.sql');
-let cachedSqlStatements = null;
+ const envVariables = loadEnvFile('./.env');
 
-const tableDefinitions = {
-    SafetyHazard: {
-        columns: ['SafetyHazardID', 'HazardType'],
-        primaryKey: ['SafetyHazardID']
-    },
-    Preference: {
-        columns: ['PreferenceID', 'Distance', 'Duration', 'Elevation', 'Difficulty'],
-        primaryKey: ['PreferenceID']
-    },
-    AppUser: {
-        columns: ['UserID', 'Name', 'PreferenceID', 'Email', 'PhoneNumber'],
-        primaryKey: ['UserID']
-    },
-    Equipment: {
-        columns: ['EquipmentID', 'Name', 'Kind'],
-        primaryKey: ['EquipmentID']
-    },
-    Location1: {
-        columns: ['PostalCode', 'Country', 'Province_State', 'City'],
-        primaryKey: ['PostalCode', 'Country']
-    },
-    Location2: {
-        columns: ['LocationID', 'Address', 'PostalCode', 'Country', 'Latitude', 'Longitude'],
-        primaryKey: ['LocationID']
-    },
-    Hike1: {
-        columns: ['Kind', 'Distance', 'Elevation', 'Duration', 'Difficulty'],
-        primaryKey: ['Kind', 'Distance', 'Elevation', 'Duration']
-    },
-    Hike2: {
-        columns: ['HikeID', 'LocationID', 'Name', 'Kind', 'Season', 'TrailCondition', 'Duration', 'Elevation', 'Distance'],
-        primaryKey: ['HikeID']
-    },
-    WeatherWarning: {
-        columns: ['SafetyHazardID', 'Description', 'DateIssued', 'SeverityLevel', 'Kind'],
-        primaryKey: ['SafetyHazardID']
-    },
-    AnimalSighting: {
-        columns: ['SafetyHazardID', 'Description', 'DateIssued', 'Animal'],
-        primaryKey: ['SafetyHazardID']
-    },
-    ForestFireWarning: {
-        columns: ['SafetyHazardID', 'Description', 'DateIssued', 'Rating', 'Cause'],
-        primaryKey: ['SafetyHazardID']
-    },
-    Needs: {
-        columns: ['EquipmentID', 'HikeID'],
-        primaryKey: ['EquipmentID', 'HikeID']
-    },
-    Saves: {
-        columns: ['UserID', 'HikeID'],
-        primaryKey: ['UserID', 'HikeID']
-    },
-    Has: {
-        columns: ['HikeID', 'SafetyHazardID'],
-        primaryKey: ['HikeID', 'SafetyHazardID']
-    },
-    Feedback: {
-        columns: ['FeedbackID', 'Rating', 'Review', 'DateSubmitted', 'UserID', 'HikeID'],
-        primaryKey: ['FeedbackID']
-    }
-};
+ // Database configuration setup. Ensure your .env file has the required database credentials.
+ const dbConfig = {
+     user: envVariables.ORACLE_USER,
+     password: envVariables.ORACLE_PASS,
+     connectString: `${envVariables.ORACLE_HOST}:${envVariables.ORACLE_PORT}/${envVariables.ORACLE_DBNAME}`,
+     poolMin: 1,
+     poolMax: 3,
+     poolIncrement: 1,
+     poolTimeout: 60
+ };
 
-// Database configuration setup. Ensure your .env file has the required database credentials.
-const dbConfig = {
-    user: envVariables.ORACLE_USER,
-    password: envVariables.ORACLE_PASS,
-    connectString: `${envVariables.ORACLE_HOST}:${envVariables.ORACLE_PORT}/${envVariables.ORACLE_DBNAME}`,
-    poolMin: 1,
-    poolMax: 3,
-    poolIncrement: 1,
-    poolTimeout: 60
-};
+ // initialize connection pool
+ async function initializeConnectionPool() {
+     try {
+         await oracledb.createPool(dbConfig);
+         console.log('Connection pool started');
+     } catch (err) {
+         console.error('Initialization error: ' + err.message);
+     }
+ }
 
-// initialize connection pool
-async function initializeConnectionPool() {
+ async function closePoolAndExit() {
+     console.log('\nTerminating');
+     try {
+         await oracledb.getPool().close(10); // 10 seconds grace period for connections to finish
+         console.log('Pool closed');
+         process.exit(0);
+     } catch (err) {
+         console.error(err.message);
+         process.exit(1);
+     }
+ }
+
+ initializeConnectionPool();
+
+ process
+     .once('SIGTERM', closePoolAndExit)
+     .once('SIGINT', closePoolAndExit);
+
+
+ // ----------------------------------------------------------
+ // Wrapper to manage OracleDB actions, simplifying connection handling.
+ async function withOracleDB(action) {
+     let connection;
+     try {
+         connection = await oracledb.getConnection(); // Gets a connection from the default pool 
+         return await action(connection);
+     } catch (err) {
+         console.error(err);
+         throw err;
+     } finally {
+         if (connection) {
+             try {
+                 await connection.close();
+             } catch (err) {
+                 console.error(err);
+             }
+         }
+     }
+ }
+
+
+ // ----------------------------------------------------------
+ // Core functions for database operations
+ // Modify these functions, especially the SQL queries, based on your project's requirements and design.
+ async function testOracleConnection() {
+     return await withOracleDB(async (connection) => {
+         return true;
+     }).catch(() => {
+         return false;
+     });
+ }
+
+ async function fetchDemotableFromDb() {
+     return await withOracleDB(async (connection) => {
+         const result = await connection.execute('SELECT * FROM DEMOTABLE');
+         return result.rows;
+     }).catch(() => {
+         return [];
+     });
+ }
+
+
+
+ async function initiateDemotable() {
+     return await withOracleDB(async (connection) => {
+         try {
+             await connection.execute(`DROP TABLE DEMOTABLE`);
+         } catch(err) {
+             console.log('Table might not exist, proceeding to create...');
+         }
+
+         const result = await connection.execute(`
+             CREATE TABLE DEMOTABLE (
+             id NUMBER PRIMARY KEY,
+                 name VARCHAR2(20)
+             )
+         `);
+         return true;
+     }).catch(() => {
+         return false;
+     });
+ }
+
+ async function countDemotable() {
+     return await withOracleDB(async (connection) => {
+         const result = await connection.execute('SELECT Count(*) FROM DEMOTABLE');
+         return result.rows[0][0];
+     }).catch(() => {
+         return -1;
+     });
+ }
+
+
+
+
+
+
+
+
+
+
+
+// Fetch All Tables 
+async function fetchAppUserFromDb() {
     try {
-        await oracledb.createPool(dbConfig);
-        console.log('Connection pool started');
+        
+        return await withOracleDB(async (connection) => {
+            const result = await connection.execute('SELECT * FROM AppUser'); // removed semicolon
+            return result.rows;
+        });
+        
     } catch (err) {
-        console.error('Initialization error: ' + err.message);
+        console.error('Error fetching AppUser:', err);
+        return [];
     }
 }
 
-async function closePoolAndExit() {
-    console.log('\nTerminating');
+async function fetchHikeTablesFromDb() {
     try {
-        await oracledb.getPool().close(10); // 10 seconds grace period for connections to finish
-        console.log('Pool closed');
-        process.exit(0);
+        return await withOracleDB(async (connection) => {
+            // Join Hike1 and Hike2 for normalized display
+            const query = `
+                SELECT 
+                    h2.HikeID,
+                    h2.Name,
+                    h2.Season,
+                    h2.TrailCondition,
+                    h1.Kind,
+                    h1.Distance,
+                    h1.Elevation,
+                    h1.Duration,
+                    h1.Difficulty,
+                    h2.LocationID
+                FROM Hike2 h2
+                JOIN Hike1 h1
+                    ON h2.Kind = h1.Kind
+                    AND h2.Distance = h1.Distance
+                    AND h2.Elevation = h1.Elevation
+                    AND h2.Duration = h1.Duration
+            `;
+            const result = await connection.execute(query);
+            // console.log('Fetched hikes from DB:', result.rows); // Debugging
+            return result.rows;
+        });
     } catch (err) {
-        console.error(err.message);
-        process.exit(1);
+        console.error('Error fetching Hikes:', err);
+        return [];
     }
 }
 
-initializeConnectionPool();
-
-process
-    .once('SIGTERM', closePoolAndExit)
-    .once('SIGINT', closePoolAndExit);
-
-
-// ----------------------------------------------------------
-// Wrapper to manage OracleDB actions, simplifying connection handling.
-async function withOracleDB(action) {
-    let connection;
-    try {
-        connection = await oracledb.getConnection(); // Gets a connection from the default pool 
-        return await action(connection);
-    } catch (err) {
-        console.error(err);
-        throw err;
-    } finally {
-        if (connection) {
-            try {
-                await connection.close();
-            } catch (err) {
-                console.error(err);
-            }
-        }
-    }
-}
-
-
-// ----------------------------------------------------------
-// Core functions for database operations
-// Modify these functions, especially the SQL queries, based on your project's requirements and design.
-async function testOracleConnection() {
+ // 1. INSERT
+async function insertAppUser(uid, name, pid, email, pnum) {
     return await withOracleDB(async (connection) => {
-        return true;
-    }).catch(() => {
+        const result = await connection.execute(
+            // 1. UPDATED SQL: Changed :uid to :u_id to avoid "ORA-01745"
+            `INSERT INTO AppUser (UserID, Name, PreferenceID, Email, PhoneNumber)
+             VALUES (:u_id, :user_name, :pid, :email, :pnum)`,
+            
+            // 2. UPDATED DATA: Using an Object {} to match the names above
+            {
+                u_id: uid,
+                user_name: name,
+                pid: pid,
+                email: email,
+                pnum: pnum
+            },
+            { autoCommit: true }
+        );
+
+        return result.rowsAffected && result.rowsAffected > 0;
+    }).catch((err) => {
+        console.error("DB Error:", err);
         return false;
     });
 }
 
-async function fetchTableRecords(tableName) {
-    const definition = getTableDefinition(tableName);
-    const projection = definition.columns.join(', ');
-
+ // 1. INSERT
+ async function insertPreference(pid, dist, dur, elev, diff) {
     return await withOracleDB(async (connection) => {
-        const result = await connection.execute(`SELECT ${projection} FROM ${tableName}`);
-        return result.rows;
-    }).catch(() => []);
+        const result = await connection.execute(
+            `
+            INSERT INTO Preference (pid, dist, dur, elev, diff)
+            VALUES (:pid, :dist, :dur, :elev, :diff)
+            `,
+            [pid, dist, dur, elev, diff],
+            { autoCommit: true }
+        );
+
+        return result.rowsAffected && result.rowsAffected > 0;
+    }).catch(() => {
+        return false;
+    });
+ }
+
+ // 2. UPDATE
+// Update AppUser (simple positional bind version)
+async function updateAppUser(uid, newName, email, pnum) {
+    return await withOracleDB(async (connection) => {
+        const fields = [];
+        const values = [];
+
+        if (newName != null && newName !== "") {
+            fields.push("Name = :1");
+            values.push(newName);
+        }
+
+        if (email != null && email !== "") {
+            fields.push("Email = :2");
+            values.push(email);
+        }
+
+        if (pnum != null && pnum !== "") {
+            fields.push("PhoneNumber = :3");
+            values.push(pnum);
+        }
+
+        if (fields.length === 0) {
+            return false; // nothing to update
+        }
+
+        const sql = `
+            UPDATE AppUser
+            SET ${fields.join(", ")}
+            WHERE UserID = :${fields.length + 1}
+        `;
+
+        // Append UID at the end for positional bind
+        values.push(uid);
+
+        console.log("SQL:", sql);
+        console.log("Values:", values);
+
+        const result = await connection.execute(sql, values, { autoCommit: true });
+
+        return result.rowsAffected && result.rowsAffected > 0;
+    }).catch((err) => {
+        console.error("DB error:", err);
+        return false;
+    });
 }
 
-async function initiateTable(_tableName) {
+// 3. DELETE
+async function deleteAppUser(uid) {
+    if (!uid) return false;
+
+    const numericUid = Number(uid);
+    if (isNaN(numericUid)) return false;
+
     return await withOracleDB(async (connection) => {
-        await executeSqlScript(connection);
+        // Delete Feedback first
+        await connection.execute(
+            `DELETE FROM Feedback WHERE UserID = :1`,
+            [numericUid],
+            { autoCommit: true }
+        );
+
+        // Delete Preference if linked
+        await connection.execute(
+            `DELETE FROM Preference WHERE PreferenceID = (SELECT PreferenceID FROM AppUser WHERE UserID = :1)`,
+            [numericUid],
+            { autoCommit: true }
+        );
+
+        // Delete main user
+        const result = await connection.execute(
+            `DELETE FROM AppUser WHERE UserID = :1`,
+            [numericUid],
+            { autoCommit: true }
+        );
+
+        if (result.rowsAffected === 0) {
+            console.error(`No user found with UserID: ${numericUid}`);
+            return false;
+        }
+
         return true;
     }).catch(() => false);
 }
 
-async function insertIntoTable(tableName, recordValues = {}) {
-    const definition = getTableDefinition(tableName);
-    const normalizedRecord = normalizeRecord(definition, recordValues, tableName);
-    const columns = Object.keys(normalizedRecord);
-
-    if (columns.length === 0) {
-        throw new Error('No columns provided for insert');
-    }
-
-    const bindParams = {};
-    const valueTokens = columns.map((column, index) => {
-        const bindKey = `val_${index}`;
-        bindParams[bindKey] = normalizedRecord[column];
-        return `:${bindKey}`;
-    });
+// 4. SELECT with AND/OR support
+async function selectHike(filters) {
+    // console.log('--- selectHike called ---');
+    // console.log('Filters received:', filters);
 
     return await withOracleDB(async (connection) => {
-        const result = await connection.execute(
-            `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES (${valueTokens.join(', ')})`,
-            bindParams,
-            { autoCommit: true }
-        );
-        return result.rowsAffected && result.rowsAffected > 0;
-    }).catch(() => false);
-}
+        const conditions = [];
+        const binds = [];
 
-async function updateTableRecords(tableName, criteria = {}, updates = {}) {
-    const definition = getTableDefinition(tableName);
-    const normalizedCriteria = normalizeRecord(definition, criteria, tableName);
-    const normalizedUpdates = normalizeRecord(definition, updates, tableName);
+        filters.forEach((f, index) => {
+            if (f.value !== null && f.value !== "") {
+                const bindIndex = binds.length + 1;
+                const logical = index > 0 ? f.logical : "";
+                const condition = `${logical} h2.${f.attribute} ${f.operator} :${bindIndex}`;
+                conditions.push(condition);
+                binds.push(f.value);
 
-    if (Object.keys(normalizedUpdates).length === 0) {
-        throw new Error('No columns provided for update');
-    }
-
-    if (Object.keys(normalizedCriteria).length === 0) {
-        throw new Error('Update criteria must be provided');
-    }
-
-    const binds = {};
-    const setClauses = Object.keys(normalizedUpdates).map((column, index) => {
-        const bindKey = `set_${index}`;
-        binds[bindKey] = normalizedUpdates[column];
-        return `${column} = :${bindKey}`;
-    });
-
-    const whereClauses = Object.keys(normalizedCriteria).map((column, index) => {
-        const bindKey = `where_${index}`;
-        binds[bindKey] = normalizedCriteria[column];
-        return `${column} = :${bindKey}`;
-    });
-
-    return await withOracleDB(async (connection) => {
-        const result = await connection.execute(
-            `UPDATE ${tableName} SET ${setClauses.join(', ')} WHERE ${whereClauses.join(' AND ')}`,
-            binds,
-            { autoCommit: true }
-        );
-        return result.rowsAffected && result.rowsAffected > 0;
-    }).catch(() => false);
-}
-
-async function countTableRows(tableName) {
-    return await withOracleDB(async (connection) => {
-        const result = await connection.execute(`SELECT COUNT(*) FROM ${tableName}`);
-        return result.rows[0][0];
-    }).catch(() => -1);
-}
-
-async function fetchDemotableFromDb() {
-    return fetchTableRecords('AppUser');
-}
-
-async function initiateDemotable() {
-    return initiateTable();
-}
-
-async function insertDemotable(id, name, email, phoneNumber) {
-    const numericId = Number(id);
-    if (Number.isNaN(numericId)) {
-        throw new Error('UserID must be a valid number');
-    }
-
-    const trimmedName = (name || '').trim();
-    const trimmedEmail = (email || '').trim();
-    const trimmedPhone = (phoneNumber || '').trim();
-
-    if (!trimmedName || !trimmedEmail || !trimmedPhone) {
-        throw new Error('Name, email, and phone number are required');
-    }
-
-    return insertIntoTable('AppUser', {
-        UserID: numericId,
-        Name: trimmedName,
-        PreferenceID: null,
-        Email: trimmedEmail,
-        PhoneNumber: trimmedPhone
-    });
-}
-
-async function updateNameDemotable(oldName, newName) {
-    return updateTableRecords('AppUser', { Name: oldName }, { Name: newName });
-}
-
-async function countDemotable() {
-    return countTableRows('AppUser');
-}
-
-async function executeSqlScript(connection) {
-    const statements = await loadSqlStatements();
-
-    for (const statement of statements) {
-        const sql = statement.trim();
-        if (!sql) {
-            continue;
-        }
-
-        try {
-            await connection.execute(sql);
-        } catch (err) {
-            const isDropStatement = sql.toUpperCase().startsWith('DROP TABLE');
-            const tableMissing = err.errorNum === 942;
-
-            if (isDropStatement && tableMissing) {
-                continue;
+                // console.log(`Condition added: ${condition}, Bind value: ${f.value}`);
             }
+        });
 
-            console.error(`Failed to execute SQL: ${sql}`);
-            throw err;
-        }
-    }
+        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" ")}` : "";
+        // console.log('Generated WHERE clause:', whereClause);
 
-    await connection.commit();
-}
+        const SQL = `
+            SELECT h2.Name
+            FROM Hike2 h2
+            JOIN Hike1 h1
+              ON h1.Kind = h2.Kind
+             AND h1.Distance = h2.Distance
+             AND h1.Elevation = h2.Elevation
+             AND h1.Duration = h2.Duration
+            ${whereClause}
+        `;
+        // console.log('Generated SQL:', SQL);
+        // console.log('Bind array:', binds);
 
-async function loadSqlStatements() {
-    if (cachedSqlStatements) {
-        return cachedSqlStatements;
-    }
+        const result = await connection.execute(SQL, binds);
+        //console.log('Number of rows returned:', result.rows.length);
+        // console.log('Rows:', result.rows);
 
-    const fileContent = await fs.readFile(sqlFilePath, 'utf8');
-    cachedSqlStatements = fileContent
-        .split(/;\s*(?:\r?\n|$)/)
-        .map((stmt) => stmt.trim())
-        .filter((stmt) => stmt.length > 0);
-
-    return cachedSqlStatements;
-}
-
-function getTableDefinition(tableName) {
-    const definition = tableDefinitions[tableName];
-    if (!definition) {
-        throw new Error(`Unsupported table: ${tableName}`);
-    }
-    return definition;
-}
-
-function normalizeRecord(definition, record = {}, tableName = 'table') {
-    const normalized = {};
-    if (!record) {
-        return normalized;
-    }
-
-    const columnMap = definition.columns.reduce((map, column) => {
-        map[column.toUpperCase()] = column;
-        return map;
-    }, {});
-
-    Object.entries(record).forEach(([key, value]) => {
-        const targetColumn = columnMap[key.toUpperCase()];
-        if (!targetColumn) {
-            throw new Error(`Column ${key} is not valid for table ${tableName}`);
-        }
-        normalized[targetColumn] = value;
+        return result.rows;
+    }).catch((err) => {
+        console.error('Error in selectHike:', err);
+        return [];
     });
+}
+// 5. Project Hike
+async function projectHike(attributes) {
+    // console.log('--- projectHike called ---');
+    // console.log('Attributes to select:', attributes);
 
-    return normalized;
+    return await withOracleDB(async (connection) => {
+        const SQL = `
+            SELECT ${attributes}
+            FROM Hike1 h1
+            JOIN Hike2 h2
+              ON h1.Kind = h2.Kind
+             AND h1.Distance = h2.Distance
+             AND h1.Elevation = h2.Elevation
+             AND h1.Duration = h2.Duration
+        `;
+
+        // console.log('Generated SQL:', SQL);
+
+        const result = await connection.execute(SQL);
+        // console.log('Number of rows returned:', result.rows.length);
+        // console.log('Rows:', result.rows);
+
+        return result.rows;
+    }).catch((err) => {
+        console.error('Error in projectHike:', err);
+        return [];
+    });
+}
+// 6. JOIN: Find users who saved a specific hike
+async function findUsersWhoHiked(hid) {
+    return await withOracleDB(async (connection) => {
+        const SQL = `
+            SELECT a.Name
+            FROM AppUser a
+            JOIN Saves s ON a.UserID = s.UserID
+            JOIN Hike2 h2 ON s.HikeID = h2.HikeID
+            WHERE h2.HikeID = :hid
+        `;
+
+        const result = await connection.execute(SQL, [hid]);
+        return result.rows;
+    }).catch(() => {
+        return [];
+    });
+}
+// 7. Aggregation with GROUP BY: Average Difficulty per Season (with debugging)
+async function findAvgDiffPerSeason() {
+    // console.log('--- findAvgDiffPerSeason called ---');
+
+    return await withOracleDB(async (connection) => {
+        const SQL = `
+            SELECT h2.Season, AVG(h1.Difficulty) AS AvgDifficulty
+            FROM Hike2 h2
+            JOIN Hike1 h1
+              ON h1.Kind = h2.Kind
+             AND h1.Distance = h2.Distance
+             AND h1.Elevation = h2.Elevation
+             AND h1.Duration = h2.Duration
+            GROUP BY h2.Season
+            ORDER BY h2.Season
+        `;
+
+        // console.log('Generated SQL:', SQL);
+
+        const result = await connection.execute(SQL);
+
+        // console.log('Number of rows returned:', result.rows.length);
+        // console.log('Rows:', result.rows);
+
+        return result.rows;
+    }).catch((err) => {
+        console.error('Error in findAvgDiffPerSeason:', err);
+        return [];
+    });
 }
 
-module.exports = {
+// 8. Aggregation with HAVING: Hikes with no safety hazards
+async function findSafeHikes() {
+    // console.log('--- findSafeHikes called ---');
+
+    return await withOracleDB(async (connection) => {
+        const SQL = `
+            SELECT h2.Name
+            FROM Hike2 h2
+            LEFT JOIN Has h ON h2.HikeID = h.HikeID
+            GROUP BY h2.HikeID, h2.Name
+            HAVING COUNT(h.SafetyHazardID) < 1
+            ORDER BY h2.Name
+        `;
+
+        // console.log('Generated SQL:', SQL);
+
+        const result = await connection.execute(SQL);
+
+        // console.log('Number of rows returned:', result.rows.length);
+        // console.log('Rows:', result.rows);
+
+        return result.rows;
+    }).catch((err) => {
+        console.error('Error in findSafeHikes:', err);
+        return [];
+    });
+}
+
+// 9. Nested aggregation with GROUP BY
+async function findGoodConditionHikes() {
+    return await withOracleDB(async (connection) => {
+        const result = await connection.execute(`
+            SELECT h2.Name, h2.Season, h2.TrailCondition
+            FROM Hike2 h2
+            GROUP BY h2.HikeID, h2.Name, h2.Season, h2.TrailCondition
+            HAVING h2.TrailCondition > (
+                SELECT AVG(h2b.TrailCondition)
+                FROM Hike2 h2b
+                WHERE h2b.Season = h2.Season
+            )
+        `);
+        return result.rows;
+    }).catch(() => {
+        return [];
+    })
+}
+
+// 10. DIVISION
+async function findUsersWhoHikedEveryHike() {
+    return await withOracleDB(async (connection) => {
+        const result = await connection.execute(`
+            SELECT u.Name
+            FROM AppUser u
+            WHERE NOT EXISTS (
+                SELECT h.HikeID
+                FROM Hike2 h
+                MINUS (
+                    SELECT s.HikeId
+                    FROM Saves s
+                    WHERE s.UserID = u.UserID
+                )
+            )
+        `);
+        return result.rows;
+    }).catch(() => {
+        return [];
+    })
+}
+
+ module.exports = {
     testOracleConnection,
-    fetchDemotableFromDb,
-    initiateDemotable, 
-    insertDemotable, 
-    updateNameDemotable, 
-    countDemotable,
-    fetchTableRecords,
-    initiateTable,
-    insertIntoTable,
-    updateTableRecords,
-    countTableRows,
-    tableDefinitions
-};
+    insertAppUser,
+    insertPreference, 
+    updateAppUser, 
+    deleteAppUser, 
+    fetchAppUserFromDb,
+    fetchHikeTablesFromDb,
+    selectHike,
+    projectHike,
+    findUsersWhoHiked,
+    findAvgDiffPerSeason,
+    findSafeHikes,
+    findGoodConditionHikes,
+    // findHikeByRating,
+    findUsersWhoHikedEveryHike
+ };
