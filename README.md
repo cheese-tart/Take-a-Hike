@@ -34,7 +34,7 @@ The system uses multiple interconnected tables:
 - **Hike**: Stores Hike data.
 - **Location**: Full address and coordinates of hikes.
 - **SafetyHazard**: Safety Hazard information.
-- **Feedback**: User-inputted Reviews for a Hike.
+- **Feedback**: User-inputted reviews for a Hike.
 
 # Setup
 
