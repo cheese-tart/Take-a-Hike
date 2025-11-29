@@ -30,7 +30,7 @@ project/
 
 1. **Clone the repository:**
 ```sh
-git clone https://github.com/fegicochen/matchmaking-app-backend.git
+git clone https://github.com/cheese-tart/Take-a-Hike.git
 ```
 
 2. **Navigate to the project directory:**
