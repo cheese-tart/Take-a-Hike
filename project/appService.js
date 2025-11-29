@@ -269,38 +269,38 @@ async function updateAppUser(uid, newName, email, pnum) {
 async function deleteAppUser(uid) {
     if (!uid) return false;
 
+    const numericUid = Number(uid);
+    if (isNaN(numericUid)) return false;
+
     return await withOracleDB(async (connection) => {
         // Delete Feedback first
         await connection.execute(
-            `DELETE FROM Feedback WHERE UserID = :uid`,
-            { uid },
+            `DELETE FROM Feedback WHERE UserID = :1`,
+            [numericUid],
             { autoCommit: true }
         );
 
         // Delete Preference if linked
         await connection.execute(
-            `DELETE FROM Preference WHERE PreferenceID = (SELECT PreferenceID FROM AppUser WHERE UserID = :uid)`,
-            { uid },
+            `DELETE FROM Preference WHERE PreferenceID = (SELECT PreferenceID FROM AppUser WHERE UserID = :1)`,
+            [numericUid],
             { autoCommit: true }
         );
 
         // Delete main user
         const result = await connection.execute(
-            `DELETE FROM AppUser WHERE UserID = :uid`,
-            { uid },
+            `DELETE FROM AppUser WHERE UserID = :1`,
+            [numericUid],
             { autoCommit: true }
         );
 
         if (result.rowsAffected === 0) {
-            console.error(`No user found with UserID: ${uid}`);
+            console.error(`No user found with UserID: ${numericUid}`);
             return false;
         }
 
         return true;
-    }).catch((err) => {
-        console.error("DB error:", err);
-        return false;
-    });
+    }).catch(() => false);
 }
 
 // 4. SELECT
