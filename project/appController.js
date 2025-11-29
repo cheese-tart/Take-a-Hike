@@ -182,5 +182,4 @@ router.post(`/users-who-hiked-every-hike`, async (req, res) => {
     }
 });
 
-
 module.exports = router;

@@ -12,7 +12,6 @@
  * 
  */
 
-
 // This function checks the database connection and updates its status on the frontend.
 async function checkDbConnection() {
     const statusElem = document.getElementById('dbStatus');
@@ -36,6 +35,72 @@ async function checkDbConnection() {
     });
 }
 
+// LEGACY FUNCTIONS
+// Updates names in the demotable.
+async function updateNameDemotable(event) {
+    event.preventDefault();
+
+    const oldNameValue = document.getElementById('updateOldName').value;
+    const newNameValue = document.getElementById('updateNewName').value;
+
+    const response = await fetch('/update-name-demotable', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            oldName: oldNameValue,
+            newName: newNameValue
+        })
+    });
+
+    const responseData = await response.json();
+    const messageElement = document.getElementById('updateNameResultMsg');
+
+    if (responseData.success) {
+        messageElement.textContent = "Name updated successfully!";
+        fetchTableData();
+    } else {
+        messageElement.textContent = "Error updating name!";
+    }
+}
+
+// Counts rows in the demotable.
+// Modify the function accordingly if using different aggregate functions or procedures.
+async function countDemotable() {
+    const response = await fetch("/count-demotable", {
+        method: 'GET'
+    });
+
+    const responseData = await response.json();
+    const messageElement = document.getElementById('countResultMsg');
+
+    if (responseData.success) {
+        const tupleCount = responseData.count;
+        messageElement.textContent = `The number of tuples in demotable: ${tupleCount}`;
+    } else {
+        alert("Error in count demotable!");
+    }
+}
+
+// This function resets or initializes the demotable.
+async function resetDemotable() {
+    const response = await fetch("/initiate-demotable", {
+        method: 'POST'
+    });
+    const responseData = await response.json();
+
+    if (responseData.success) {
+        const messageElement = document.getElementById('resetResultMsg');
+        messageElement.textContent = "demotable initiated successfully!";
+        fetchTableData();
+    } else {
+        alert("Error initiating table!");
+    }
+}
+
+
+// IMPLEMENTED FUNCTIONS
 // Fetches AppUser data from your backend and displays it in the table
 async function fetchAndDisplayUsers() {
     const tableBody = document.querySelector('#usertable tbody');
@@ -63,6 +128,7 @@ async function fetchAndDisplayUsers() {
         console.error('Error fetching users:', err);
     }
 }
+
 // Run the function once page is loaded
 window.addEventListener('DOMContentLoaded', fetchAndDisplayUsers);
 
@@ -99,24 +165,6 @@ async function fetchAndDisplayHikes() {
 
     } catch (err) {
         console.error('Error fetching hikes:', err);
-    }
-}
-
-
-
-// This function resets or initializes the demotable.
-async function resetDemotable() {
-    const response = await fetch("/initiate-demotable", {
-        method: 'POST'
-    });
-    const responseData = await response.json();
-
-    if (responseData.success) {
-        const messageElement = document.getElementById('resetResultMsg');
-        messageElement.textContent = "demotable initiated successfully!";
-        fetchTableData();
-    } else {
-        alert("Error initiating table!");
     }
 }
 
@@ -474,80 +522,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Attach event listener
-document.getElementById("deleteAppUserForm").addEventListener("submit", deleteAppUserHandler);
-
-// Attach event listener
-document.getElementById("updateAppUserForm").addEventListener("submit", updateAppUser);
-
-// Updates names in the demotable.
-async function updateNameDemotable(event) {
-    event.preventDefault();
-
-    const oldNameValue = document.getElementById('updateOldName').value;
-    const newNameValue = document.getElementById('updateNewName').value;
-
-    const response = await fetch('/update-name-demotable', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            oldName: oldNameValue,
-            newName: newNameValue
-        })
-    });
-
-    const responseData = await response.json();
-    const messageElement = document.getElementById('updateNameResultMsg');
-
-    if (responseData.success) {
-        messageElement.textContent = "Name updated successfully!";
-        fetchTableData();
-    } else {
-        messageElement.textContent = "Error updating name!";
-    }
-}
-
-// Counts rows in the demotable.
-// Modify the function accordingly if using different aggregate functions or procedures.
-async function countDemotable() {
-    const response = await fetch("/count-demotable", {
-        method: 'GET'
-    });
-
-    const responseData = await response.json();
-    const messageElement = document.getElementById('countResultMsg');
-
-    if (responseData.success) {
-        const tupleCount = responseData.count;
-        messageElement.textContent = `The number of tuples in demotable: ${tupleCount}`;
-    } else {
-        alert("Error in count demotable!");
-    }
-}
-
-
 // ---------------------------------------------------------------
 // Initializes the webpage functionalities.
 // Add or remove event listeners based on the desired functionalities.
 window.onload = async function() {
     try {
         await checkDbConnection(); // if this returns a promise
-        // await fetchTableData();    // wait for both table fetches
         await fetchAndDisplayUsers();
         await fetchAndDisplayHikes();
     } catch (err) {
         console.error('Error during page load:', err);
     }
 
-    document.getElementById("resetDemotable").addEventListener("click", resetDemotable);
     document.getElementById("insertAppUserForm").addEventListener("submit", insertAppUser);
-    document.getElementById("updataNameDemotable").addEventListener("submit", updateNameDemotable);
-    document.getElementById("countDemotable").addEventListener("click", countDemotable);
+    document.getElementById("deleteAppUserForm").addEventListener("submit", deleteAppUserHandler);
+    document.getElementById("updateAppUserForm").addEventListener("submit", updateAppUser);
 };
-
-// Refresh both tables
-async function fetchTableData() {
-    
-}
