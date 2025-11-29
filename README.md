@@ -26,6 +26,16 @@ project/
     └── envUtil.js      // Environment configuration utilities
 ```
 
+# Database Schema
+
+The system uses multiple interconnected tables:
+- **Users**: Core User data.
+- **Preferences**: User Preferences.
+- **Hike**: Stores Hike data.
+- **Location**: Full address and coordinates of hikes.
+- **SafetyHazard**: Safety Hazard information.
+- **Feedback**: User-inputted Reviews for a Hike.
+
 # Setup
 
 1. **Clone the repository:**
