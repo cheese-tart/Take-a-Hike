@@ -213,7 +213,7 @@ async function deleteAppUserHandler(event) {
 // select hikes 
 async function selectHikes(filters) {
     try {
-        const response = await fetch('/api/selectHike', {
+        const response = await fetch('/selectHike', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(filters)
@@ -235,9 +235,9 @@ document.addEventListener('DOMContentLoaded', () => {
     button.addEventListener('click', async () => {
         const filters = {
             kind: document.getElementById('kindInput').value || null,
-            distance: document.getElementById('distanceInput').value || null,
-            elevation: document.getElementById('elevationInput').value || null,
-            duration: document.getElementById('durationInput').value || null,
+            distance: document.getElementById('distanceInput').value ? Number(document.getElementById('distanceInput').value) : null,
+            elevation: document.getElementById('elevationInput').value ? Number(document.getElementById('elevationInput').value) : null,
+            duration: document.getElementById('durationInput').value ? Number(document.getElementById('durationInput').value) : null,
         };
 
         const hikes = await selectHikes(filters);
