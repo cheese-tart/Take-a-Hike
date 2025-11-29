@@ -39,7 +39,7 @@ router.post("/initiate-demotable", async (req, res) => {
     }
 });
 
-// In your appController.js
+// insert appuser
 router.post("/insert-appuser", async (req, res) => {
     const { UserID, Name, PreferenceID, Email, PhoneNumber } = req.body;
 
@@ -130,6 +130,19 @@ router.post('/findUsersWhoHiked', async (req, res) => {
     } catch (err) {
         console.error('Error in /findUsersWhoHiked:', err);
         res.status(500).json({ error: "Failed to fetch users" });
+    }
+});
+
+
+// Aggregation 7 
+// POST /avgDiffPerSeason
+router.post('/avgDiffPerSeason', async (req, res) => {
+    try {
+        const results = await appService.findAvgDiffPerSeason();
+        res.json(results);
+    } catch (err) {
+        console.error('Error in /avgDiffPerSeason:', err);
+        res.status(500).json({ error: "Failed to fetch average difficulty per season" });
     }
 });
 

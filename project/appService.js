@@ -387,11 +387,13 @@ async function findUsersWhoHiked(hid) {
         return [];
     });
 }
-// 7. Aggergation with GROUP BY
- async function findAvgDiffPerSeason() {
-     return await withOracleDB(async (connection) => {
-        const result = await connection.execute(`
-            SELECT h2.Season, AVG(h1.difficulty)
+// 7. Aggregation with GROUP BY: Average Difficulty per Season (with debugging)
+async function findAvgDiffPerSeason() {
+    // console.log('--- findAvgDiffPerSeason called ---');
+
+    return await withOracleDB(async (connection) => {
+        const SQL = `
+            SELECT h2.Season, AVG(h1.Difficulty) AS AvgDifficulty
             FROM Hike2 h2
             JOIN Hike1 h1
               ON h1.Kind = h2.Kind
@@ -399,9 +401,19 @@ async function findUsersWhoHiked(hid) {
              AND h1.Elevation = h2.Elevation
              AND h1.Duration = h2.Duration
             GROUP BY h2.Season
-        `);
+            ORDER BY h2.Season
+        `;
+
+        // console.log('Generated SQL:', SQL);
+
+        const result = await connection.execute(SQL);
+
+        // console.log('Number of rows returned:', result.rows.length);
+        // console.log('Rows:', result.rows);
+
         return result.rows;
-    }).catch(() => {
+    }).catch((err) => {
+        console.error('Error in findAvgDiffPerSeason:', err);
         return [];
     });
 }

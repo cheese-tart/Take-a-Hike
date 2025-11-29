@@ -326,6 +326,37 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// 7 aggregation 
+async function getAvgDiffPerSeason() {
+    try {
+        const response = await fetch('/avgDiffPerSeason', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const results = await response.json();
+        return results;
+    } catch (err) {
+        console.error('Error fetching avg difficulty:', err);
+        return [];
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('avgDiffBtn');
+    const resultsContainer = document.getElementById('avgDiffResults');
+
+    button.addEventListener('click', async () => {
+        const results = await getAvgDiffPerSeason();
+
+        resultsContainer.innerHTML = results.length
+            ? results.map(r => `<div>Season: ${r[0]}, Avg Difficulty: ${Number(r[1]).toFixed(2)}</div>`).join('')
+            : '<div>No data available</div>';
+    });
+});
+
 
 // Attach event listener
 document.getElementById("deleteAppUserForm").addEventListener("submit", deleteAppUserHandler);
