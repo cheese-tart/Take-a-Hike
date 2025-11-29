@@ -420,7 +420,7 @@ async function findAvgDiffPerSeason() {
 
 // 8. Aggregation with HAVING: Hikes with no safety hazards
 async function findSafeHikes() {
-    console.log('--- findSafeHikes called ---');
+    // console.log('--- findSafeHikes called ---');
 
     return await withOracleDB(async (connection) => {
         const SQL = `
@@ -432,12 +432,12 @@ async function findSafeHikes() {
             ORDER BY h2.Name
         `;
 
-        console.log('Generated SQL:', SQL);
+        // console.log('Generated SQL:', SQL);
 
         const result = await connection.execute(SQL);
 
-        console.log('Number of rows returned:', result.rows.length);
-        console.log('Rows:', result.rows);
+        // console.log('Number of rows returned:', result.rows.length);
+        // console.log('Rows:', result.rows);
 
         return result.rows;
     }).catch((err) => {
