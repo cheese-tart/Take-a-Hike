@@ -343,25 +343,33 @@ async function selectHike(filters) {
         return result.rows;
     }).catch(() => []);
 }
-// 5. PROJECTION
- async function projectHike(attributes) {
-     return await withOracleDB(async (connection) => {
-         const SQL = `
-        SELECT ${attributes}
-        FROM Hike1 h1
-        JOIN Hike2 h2
-          ON h1.Kind = h2.Kind
-         AND h1.Distance = h2.Distance
-         AND h1.Elevation = h2.Elevation
-         AND h1.Duration = h2.Duration
-        `;
-         const result = await connection.execute(SQL, [attributes]);
-         return result.rows;
-    }).catch(() => {
-        return [];
-    })
-}
+async function projectHike(attributes) {
+    // console.log('--- projectHike called ---');
+    // console.log('Attributes to select:', attributes);
 
+    return await withOracleDB(async (connection) => {
+        const SQL = `
+            SELECT ${attributes}
+            FROM Hike1 h1
+            JOIN Hike2 h2
+              ON h1.Kind = h2.Kind
+             AND h1.Distance = h2.Distance
+             AND h1.Elevation = h2.Elevation
+             AND h1.Duration = h2.Duration
+        `;
+
+        // console.log('Generated SQL:', SQL);
+
+        const result = await connection.execute(SQL);
+        // console.log('Number of rows returned:', result.rows.length);
+        // console.log('Rows:', result.rows);
+
+        return result.rows;
+    }).catch((err) => {
+        console.error('Error in projectHike:', err);
+        return [];
+    });
+}
 // 6. JOIN
  async function findUsersWhoHiked(hid) {
      return await withOracleDB(async (connection) => {

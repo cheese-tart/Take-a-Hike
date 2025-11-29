@@ -247,6 +247,48 @@ document.addEventListener('DOMContentLoaded', () => {
             : '<div>No hikes found</div>';
     });
 });
+
+// Project Hikes 
+async function projectHikes(attributes) {
+    try {
+        const response = await fetch('/projectHike', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ attributes })
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const hikes = await response.json();
+        return hikes;
+    } catch (err) {
+        console.error('Error fetching projected hikes:', err);
+        return [];
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('projectHikesBtn');
+    const resultsContainer = document.getElementById('projectedResults');
+
+    button.addEventListener('click', async () => {
+        const attributes = document.getElementById('attributesInput').value.trim();
+
+        if (!attributes) {
+            resultsContainer.innerHTML = '<div>Please enter at least one attribute to project.</div>';
+            return;
+        }
+
+        const hikes = await projectHikes(attributes);
+
+        resultsContainer.innerHTML = hikes.length
+            ? hikes.map(row => `<div>${row.join(' | ')}</div>`).join('')
+            : '<div>No hikes found</div>';
+    });
+});
+
+
+
 // Attach event listener
 document.getElementById("deleteAppUserForm").addEventListener("submit", deleteAppUserHandler);
 

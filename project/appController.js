@@ -98,6 +98,22 @@ router.post('/selectHike', async (req, res) => {
     res.json(hikes);
 });
 
+// POST /projectHike
+router.post('/projectHike', async (req, res) => {
+    try {
+        const { attributes } = req.body; // expecting a string like "h2.Name, h1.Difficulty"
+        
+        if (!attributes) {
+            return res.status(400).json({ error: "No attributes provided" });
+        }
+
+        const projectedHikes = await appService.projectHike(attributes);
+        res.json(projectedHikes);
+    } catch (err) {
+        console.error('Error in /projectHike:', err);
+        res.status(500).json({ error: "Failed to project hikes" });
+    }
+});
 
 router.get('/count-demotable', async (req, res) => {
     const tableCount = await appService.countDemotable();
