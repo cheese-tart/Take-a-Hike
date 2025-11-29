@@ -18,6 +18,7 @@ This project is a full-stack platform built with Node.js, Express.js, and Oracle
 # Project Structure
 
 ```
+project/
 ├── appController.js    // API route handlers
 ├── appService.js       // Business logic and database operations
 ├── server.js           // Express server setup
