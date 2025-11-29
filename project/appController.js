@@ -63,6 +63,17 @@ router.post("/insert-appuser", async (req, res) => {
     }
 });
 
+router.post("/update-appuser", async (req, res) => {
+    const { uid, newName, email, pnum } = req.body;
+
+    const updateResult = await appService.updateAppUser(uid, newName, email, pnum);
+    if (updateResult) {
+        res.json({ success: true });
+    } else {
+        res.status(500).json({ success: false });
+    }
+});
+
 router.post("/update-name-demotable", async (req, res) => {
     const { oldName, newName } = req.body;
     const updateResult = await appService.updateNameDemotable(oldName, newName);

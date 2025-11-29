@@ -161,6 +161,35 @@ async function insertAppUser(event) {
     }
 }
 
+// Update AppUser
+async function updateAppUser(event) {
+    event.preventDefault();
+
+    const uid = document.getElementById('updateUid').value;
+    const newName = document.getElementById('updateName').value || null;
+    const email = document.getElementById('updateEmail').value || null;
+    const pnum = document.getElementById('updatePhone').value || null;
+
+    const response = await fetch('/update-appuser', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid, newName, email, pnum })
+    });
+
+    const result = await response.json();
+    const messageElem = document.getElementById('updateResultMsg');
+
+    if (result.success) {
+        messageElem.textContent = "User updated successfully!";
+        fetchAndDisplayUsers(); // Refresh table after update
+    } else {
+        messageElem.textContent = "Error updating user!";
+    }
+}
+
+// Attach event listener
+document.getElementById("updateAppUserForm").addEventListener("submit", updateAppUser);
+
 // Updates names in the demotable.
 async function updateNameDemotable(event) {
     event.preventDefault();

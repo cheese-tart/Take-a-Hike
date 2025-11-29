@@ -219,40 +219,48 @@ async function insertAppUser(uid, name, pid, email, pnum) {
  }
 
  // 2. UPDATE
- async function updateAppUser(uid, newName, email, pnum) {
+// Update AppUser (simple positional bind version)
+async function updateAppUser(uid, newName, email, pnum) {
     return await withOracleDB(async (connection) => {
         const fields = [];
-        const binds = { uid };
+        const values = [];
 
-        if (newName != null) {
-            fields.push("name = :newName");
-            binds.newName = newName;
+        if (newName != null && newName !== "") {
+            fields.push("Name = :1");
+            values.push(newName);
         }
 
-        if (email != null) {
-            fields.push("email = :email");
-            binds.email = email;
+        if (email != null && email !== "") {
+            fields.push("Email = :2");
+            values.push(email);
         }
 
-        if (pnum != null) {
-            fields.push("pnum = :pnum");
-            binds.pnum = pnum;
+        if (pnum != null && pnum !== "") {
+            fields.push("PhoneNumber = :3");
+            values.push(pnum);
         }
 
         if (fields.length === 0) {
-            return false;
+            return false; // nothing to update
         }
 
         const sql = `
             UPDATE AppUser
             SET ${fields.join(", ")}
-            WHERE uid = :uid
+            WHERE UserID = :${fields.length + 1}
         `;
 
-        const result = await connection.execute(sql, binds, { autoCommit: true });
+        // Append UID at the end for positional bind
+        values.push(uid);
+
+        console.log("SQL:", sql);
+        console.log("Values:", values);
+
+        const result = await connection.execute(sql, values, { autoCommit: true });
 
         return result.rowsAffected && result.rowsAffected > 0;
-    }).catch(() => {
+    }).catch((err) => {
+        console.error("DB error:", err);
         return false;
     });
 }
