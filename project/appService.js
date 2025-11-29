@@ -303,30 +303,29 @@ async function deleteAppUser(uid) {
     }).catch(() => false);
 }
 
-// 4. SELECT
+// 4. SELECT with AND/OR support
 async function selectHike(filters) {
+    // console.log('--- selectHike called ---');
+    // console.log('Filters received:', filters);
+
     return await withOracleDB(async (connection) => {
         const conditions = [];
         const binds = [];
 
-        if (filters.kind) {
-            conditions.push(`h2.Kind = :${binds.length + 1}`);
-            binds.push(filters.kind);
-        }
-        if (filters.distance) {
-            conditions.push(`h2.Distance = :${binds.length + 1}`);
-            binds.push(filters.distance);
-        }
-        if (filters.elevation) {
-            conditions.push(`h2.Elevation = :${binds.length + 1}`);
-            binds.push(filters.elevation);
-        }
-        if (filters.duration) {
-            conditions.push(`h2.Duration = :${binds.length + 1}`);
-            binds.push(filters.duration);
-        }
+        filters.forEach((f, index) => {
+            if (f.value !== null && f.value !== "") {
+                const bindIndex = binds.length + 1;
+                const logical = index > 0 ? f.logical : "";
+                const condition = `${logical} h2.${f.attribute} ${f.operator} :${bindIndex}`;
+                conditions.push(condition);
+                binds.push(f.value);
 
-        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+                // console.log(`Condition added: ${condition}, Bind value: ${f.value}`);
+            }
+        });
+
+        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" ")}` : "";
+        // console.log('Generated WHERE clause:', whereClause);
 
         const SQL = `
             SELECT h2.Name
@@ -338,11 +337,20 @@ async function selectHike(filters) {
              AND h1.Duration = h2.Duration
             ${whereClause}
         `;
+        // console.log('Generated SQL:', SQL);
+        // console.log('Bind array:', binds);
 
         const result = await connection.execute(SQL, binds);
+        //console.log('Number of rows returned:', result.rows.length);
+        // console.log('Rows:', result.rows);
+
         return result.rows;
-    }).catch(() => []);
+    }).catch((err) => {
+        console.error('Error in selectHike:', err);
+        return [];
+    });
 }
+// 5. Project Hike
 async function projectHike(attributes) {
     // console.log('--- projectHike called ---');
     // console.log('Attributes to select:', attributes);

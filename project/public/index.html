@@ -112,16 +112,68 @@
 
     <h3>Number 4 Select: Search Hikes</h3>
 
-    <div>
-        <label>Kind: <input type="text" id="kindInput" placeholder="Loop, Out-and-Back, etc."></label><br>
-        <label>Distance: <input type="number" id="distanceInput" placeholder="Distance in km"></label><br>
-        <label>Elevation: <input type="number" id="elevationInput" placeholder="Elevation in m"></label><br>
-        <label>Duration: <input type="number" id="durationInput" placeholder="Duration in min"></label><br>
-        <button id="searchHikesBtn">Search Hikes</button>
-    </div>
+<div>
+    <label>Kind: <input type="text" id="kindInput" placeholder="Loop, Out-and-Back, etc."></label>
+    <select id="kindLogical">
+        <option value="AND">AND</option>
+        <option value="OR">OR</option>
+    </select>
+    <select id="kindOperator">
+        <option value="=">=</option>
+        <option value="!=">!=</option>
+    </select>
+    <br>
 
-    <h3>Results:</h3>
-    <div id="hikeResults"></div>
+    <label>Distance: <input type="number" id="distanceInput" placeholder="Distance in km"></label>
+    <select id="distanceLogical">
+        <option value="AND">AND</option>
+        <option value="OR">OR</option>
+    </select>
+    <select id="distanceOperator">
+        <option value="=">=</option>
+        <option value=">">></option>
+        <option value="<"><</option>
+        <option value=">=">>=</option>
+        <option value="<="><=</option>
+        <option value="!=">!=</option>
+    </select>
+    <br>
+
+    <label>Elevation: <input type="number" id="elevationInput" placeholder="Elevation in m"></label>
+    <select id="elevationLogical">
+        <option value="AND">AND</option>
+        <option value="OR">OR</option>
+    </select>
+    <select id="elevationOperator">
+        <option value="=">=</option>
+        <option value=">">></option>
+        <option value="<"><</option>
+        <option value=">=">>=</option>
+        <option value="<="><=</option>
+        <option value="!=">!=</option>
+    </select>
+    <br>
+
+    <label>Duration: <input type="number" id="durationInput" placeholder="Duration in min"></label>
+    <select id="durationLogical">
+        <option value="AND">AND</option>
+        <option value="OR">OR</option>
+    </select>
+    <select id="durationOperator">
+        <option value="=">=</option>
+        <option value=">">></option>
+        <option value="<"><</option>
+        <option value=">=">>=</option>
+        <option value="<="><=</option>
+        <option value="!=">!=</option>
+    </select>
+    <br>
+
+    <button id="searchHikesBtn">Search Hikes</button>
+</div>
+
+<h3>Results:</h3>
+<div id="hikeResults"></div>
 
     <br><hr><br> <!-- ========================================================================= -->
     <h3>Number 5 Join</h3>

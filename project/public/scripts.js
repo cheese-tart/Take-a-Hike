@@ -211,6 +211,7 @@ async function deleteAppUserHandler(event) {
 }
 
 // select hikes 
+// 4. SELECT with AND/OR support (frontend version)
 async function selectHikes(filters) {
     try {
         const response = await fetch('/selectHike', {
@@ -219,30 +220,53 @@ async function selectHikes(filters) {
             body: JSON.stringify(filters)
         });
 
-        if (!response.ok) throw new Error('Network response was not ok');
+        if (!response.ok) {
+            await response.text(); 
+            throw new Error('Network response was not ok');
+        }
 
-        const hikes = await response.json();
-        return hikes;
+        return await response.json();
     } catch (err) {
-        console.error('Error fetching hikes:', err);
         return [];
     }
 }
+
 document.addEventListener('DOMContentLoaded', () => {
     const button = document.getElementById('searchHikesBtn');
     const resultsContainer = document.getElementById('hikeResults');
 
+    if (!button || !resultsContainer) return;
+
     button.addEventListener('click', async () => {
-        const filters = {
-            kind: document.getElementById('kindInput').value || null,
-            distance: document.getElementById('distanceInput').value ? Number(document.getElementById('distanceInput').value) : null,
-            elevation: document.getElementById('elevationInput').value ? Number(document.getElementById('elevationInput').value) : null,
-            duration: document.getElementById('durationInput').value ? Number(document.getElementById('durationInput').value) : null,
+        const filters = [];
+
+        const addFilter = (label, inputId, logicalId, operator = "=") => {
+            const inputElement = document.getElementById(inputId);
+            const logicalElement = document.getElementById(logicalId);
+
+            if (!inputElement || !logicalElement) return;
+
+            const value = inputElement.value.trim();
+            const logical = logicalElement.value;
+
+            if (value !== "") {
+                filters.push({
+                    attribute: label,
+                    operator,
+                    value: isNaN(value) ? value : Number(value),
+                    logical
+                });
+            }
         };
+
+        addFilter("Kind", "kindInput", "kindLogical");
+        addFilter("Distance", "distanceInput", "distanceLogical");
+        addFilter("Elevation", "elevationInput", "elevationLogical");
+        addFilter("Duration", "durationInput", "durationLogical");
 
         const hikes = await selectHikes(filters);
 
-        resultsContainer.innerHTML = hikes.length
+        resultsContainer.innerHTML = hikes.length > 0
             ? hikes.map(h => `<div>${h[0]}</div>`).join('')
             : '<div>No hikes found</div>';
     });
