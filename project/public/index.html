@@ -104,6 +104,25 @@
     <input type="number" id="deleteUid" required>
     <button type="submit">Delete User</button>
 </form>
+
+
+<h1>Search Hikes</h1>
+
+    <div>
+        <label>Kind: <input type="text" id="kindInput" placeholder="Loop, Out-and-Back, etc."></label><br>
+        <label>Distance: <input type="number" id="distanceInput" placeholder="Distance in km"></label><br>
+        <label>Elevation: <input type="number" id="elevationInput" placeholder="Elevation in m"></label><br>
+        <label>Duration: <input type="number" id="durationInput" placeholder="Duration in min"></label><br>
+        <button id="searchHikesBtn">Search Hikes</button>
+    </div>
+
+    <h2>Results:</h2>
+    <div id="hikeResults"></div>
+
+    <!-- Link to external JS -->
+    <script src="scripts.js"></script>
+
+
 <p id="deleteResultMsg"></p>
 
     <h2>Reset Demotable</h2>

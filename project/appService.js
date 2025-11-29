@@ -304,25 +304,45 @@ async function deleteAppUser(uid) {
 }
 
 // 4. SELECT
- async function selectHike(query) {
-     return await withOracleDB(async (connection) => {
-         const SQL = `
-        SELECT h2.name
-        FROM Hike2 h2
-        JOIN Hike1 h1
-          ON h1.Kind = h2.Kind
-         AND h1.Distance = h2.Distance
-         AND h1.Elevation = h2.Elevation
-         AND h1.Duration = h2.Duration
-        WHERE ${query}
-        `;
-         const result = await connection.execute(SQL, [query]);
-         return result.rows;
-    }).catch(() => {
-        return [];
-    });
-}
+async function selectHike(filters) {
+    return await withOracleDB(async (connection) => {
+        const conditions = [];
+        const binds = [];
 
+        if (filters.kind) {
+            conditions.push(`h2.Kind = :${binds.length + 1}`);
+            binds.push(filters.kind);
+        }
+        if (filters.distance) {
+            conditions.push(`h2.Distance = :${binds.length + 1}`);
+            binds.push(filters.distance);
+        }
+        if (filters.elevation) {
+            conditions.push(`h2.Elevation = :${binds.length + 1}`);
+            binds.push(filters.elevation);
+        }
+        if (filters.duration) {
+            conditions.push(`h2.Duration = :${binds.length + 1}`);
+            binds.push(filters.duration);
+        }
+
+        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+        const SQL = `
+            SELECT h2.Name
+            FROM Hike2 h2
+            JOIN Hike1 h1
+              ON h1.Kind = h2.Kind
+             AND h1.Distance = h2.Distance
+             AND h1.Elevation = h2.Elevation
+             AND h1.Duration = h2.Duration
+            ${whereClause}
+        `;
+
+        const result = await connection.execute(SQL, binds);
+        return result.rows;
+    }).catch(() => []);
+}
 // 5. PROJECTION
  async function projectHike(attributes) {
      return await withOracleDB(async (connection) => {

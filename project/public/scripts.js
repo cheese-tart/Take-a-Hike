@@ -210,6 +210,43 @@ async function deleteAppUserHandler(event) {
     }
 }
 
+// select hikes 
+async function selectHikes(filters) {
+    try {
+        const response = await fetch('/api/selectHike', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(filters)
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const hikes = await response.json();
+        return hikes;
+    } catch (err) {
+        console.error('Error fetching hikes:', err);
+        return [];
+    }
+}
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('searchHikesBtn');
+    const resultsContainer = document.getElementById('hikeResults');
+
+    button.addEventListener('click', async () => {
+        const filters = {
+            kind: document.getElementById('kindInput').value || null,
+            distance: document.getElementById('distanceInput').value || null,
+            elevation: document.getElementById('elevationInput').value || null,
+            duration: document.getElementById('durationInput').value || null,
+        };
+
+        const hikes = await selectHikes(filters);
+
+        resultsContainer.innerHTML = hikes.length
+            ? hikes.map(h => `<div>${h[0]}</div>`).join('')
+            : '<div>No hikes found</div>';
+    });
+});
 // Attach event listener
 document.getElementById("deleteAppUserForm").addEventListener("submit", deleteAppUserHandler);
 

@@ -91,6 +91,14 @@ router.post("/delete-appuser", async (req, res) => {
     }
 });
 
+// SELECT hike 
+router.post('/selectHike', async (req, res) => {
+    const filters = req.body;
+    const hikes = await appService.selectHike(filters);
+    res.json(hikes);
+});
+
+
 router.get('/count-demotable', async (req, res) => {
     const tableCount = await appService.countDemotable();
     if (tableCount >= 0) {
