@@ -418,18 +418,30 @@ async function findAvgDiffPerSeason() {
     });
 }
 
-// 8. Aggregation with HAVING
- async function findSafeHikes() {
-     return await withOracleDB(async (connection) => {
-        const result = await connection.execute(`
-            SELECT h2.name
+// 8. Aggregation with HAVING: Hikes with no safety hazards
+async function findSafeHikes() {
+    console.log('--- findSafeHikes called ---');
+
+    return await withOracleDB(async (connection) => {
+        const SQL = `
+            SELECT h2.Name
             FROM Hike2 h2
-            JOIN Has h ON h2.HikeID = h.HikeID
-            GROUP BY h2.HikeID
+            LEFT JOIN Has h ON h2.HikeID = h.HikeID
+            GROUP BY h2.HikeID, h2.Name
             HAVING COUNT(h.SafetyHazardID) < 1
-        `);
-        return result.rows
-    }).catch(() => {
+            ORDER BY h2.Name
+        `;
+
+        console.log('Generated SQL:', SQL);
+
+        const result = await connection.execute(SQL);
+
+        console.log('Number of rows returned:', result.rows.length);
+        console.log('Rows:', result.rows);
+
+        return result.rows;
+    }).catch((err) => {
+        console.error('Error in findSafeHikes:', err);
         return [];
     });
 }

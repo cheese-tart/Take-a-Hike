@@ -358,6 +358,37 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
+async function getSafeHikes() {
+    try {
+        const response = await fetch('/safeHikes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const hikes = await response.json();
+        return hikes;
+    } catch (err) {
+        console.error('Error fetching safe hikes:', err);
+        return [];
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('safeHikesBtn');
+    const resultsContainer = document.getElementById('safeHikesResults');
+
+    button.addEventListener('click', async () => {
+        const hikes = await getSafeHikes();
+
+        resultsContainer.innerHTML = hikes.length
+            ? hikes.map(h => `<div>${h[0]}</div>`).join('')
+            : '<div>No safe hikes found</div>';
+    });
+});
+
+
 // Attach event listener
 document.getElementById("deleteAppUserForm").addEventListener("submit", deleteAppUserHandler);
 

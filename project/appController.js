@@ -146,6 +146,18 @@ router.post('/avgDiffPerSeason', async (req, res) => {
     }
 });
 
+// Having 8
+// POST /safeHikes
+router.post('/safeHikes', async (req, res) => {
+    try {
+        const safeHikes = await appService.findSafeHikes();
+        res.json(safeHikes);
+    } catch (err) {
+        console.error('Error in /safeHikes:', err);
+        res.status(500).json({ error: "Failed to fetch safe hikes" });
+    }
+});
+
 router.get('/count-demotable', async (req, res) => {
     const tableCount = await appService.countDemotable();
     if (tableCount >= 0) {
