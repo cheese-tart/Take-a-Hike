@@ -4,7 +4,7 @@ This project is a full-stack platform built with Node.js, Express.js, and Oracle
 
 # Features
 
-- User Management
+- User and Preference Management
 - Hike Recommendations and Insights
 - Review Uploads
 
