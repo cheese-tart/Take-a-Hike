@@ -370,23 +370,23 @@ async function projectHike(attributes) {
         return [];
     });
 }
-// 6. JOIN
- async function findUsersWhoHiked(hid) {
-     return await withOracleDB(async (connection) => {
-         const SQL = `
-        SELECT a.Name
-        FROM AppUser a
-        JOIN Saves s ON a.UserID = s.UserID
-        JOIN Hike2 h2 ON s.HikeID = h2.HikeID
-        WHERE h2.HikeID = :hid
+// 6. JOIN: Find users who saved a specific hike
+async function findUsersWhoHiked(hid) {
+    return await withOracleDB(async (connection) => {
+        const SQL = `
+            SELECT a.Name
+            FROM AppUser a
+            JOIN Saves s ON a.UserID = s.UserID
+            JOIN Hike2 h2 ON s.HikeID = h2.HikeID
+            WHERE h2.HikeID = :hid
         `;
-         const result = await connection.exectute(SQL, [hid]);
+
+        const result = await connection.execute(SQL, [hid]);
         return result.rows;
     }).catch(() => {
         return [];
-    })
+    });
 }
-
 // 7. Aggergation with GROUP BY
  async function findAvgDiffPerSeason() {
      return await withOracleDB(async (connection) => {

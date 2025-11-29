@@ -287,6 +287,44 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// JOIN 
+async function getUsersWhoHiked(hid) {
+    try {
+        const response = await fetch('/findUsersWhoHiked', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ hid })
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const users = await response.json();
+        return users;
+    } catch (err) {
+        console.error('Error fetching users:', err);
+        return [];
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('findUsersBtn');
+    const resultsContainer = document.getElementById('usersResults');
+
+    button.addEventListener('click', async () => {
+        const hid = Number(document.getElementById('hikeIdInput').value);
+
+        if (!hid) {
+            resultsContainer.innerHTML = '<div>Please enter a valid HikeID.</div>';
+            return;
+        }
+
+        const users = await getUsersWhoHiked(hid);
+
+        resultsContainer.innerHTML = users.length
+            ? users.map(u => `<div>${u[0]}</div>`).join('')
+            : '<div>No users found for this hike.</div>';
+    });
+});
 
 
 // Attach event listener

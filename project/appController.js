@@ -115,6 +115,24 @@ router.post('/projectHike', async (req, res) => {
     }
 });
 
+// Join 
+// POST /findUsersWhoHiked
+router.post('/findUsersWhoHiked', async (req, res) => {
+    try {
+        const { hid } = req.body;
+
+        if (!hid) {
+            return res.status(400).json({ error: "No HikeID provided" });
+        }
+
+        const users = await appService.findUsersWhoHiked(hid);
+        res.json(users);
+    } catch (err) {
+        console.error('Error in /findUsersWhoHiked:', err);
+        res.status(500).json({ error: "Failed to fetch users" });
+    }
+});
+
 router.get('/count-demotable', async (req, res) => {
     const tableCount = await appService.countDemotable();
     if (tableCount >= 0) {
