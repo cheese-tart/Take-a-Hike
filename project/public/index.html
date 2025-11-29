@@ -67,7 +67,7 @@
 
     <br><hr><br> <!-- ========================================================================= -->
 
-    <h3>Insert New User</h3>
+    <h3>Number 1: Insert New User</h3>
 <form id="insertAppUserForm">
     <label for="insertUserID">User ID:</label>
     <input type="number" id="insertUserID" placeholder="User ID" required>
@@ -88,7 +88,9 @@
 </form>
 <p id="insertUserResultMsg"></p>
 
-<h3>Update AppUser</h3>
+<br><hr><br> <!-- ========================================================================= -->
+
+<h3>Number 2: Update AppUser</h3>
 <form id="updateAppUserForm">
     <label>User ID: <input type="number" id="updateUid" required></label><br>
     <label>New Name: <input type="text" id="updateName"></label><br>
@@ -98,15 +100,17 @@
 </form>
 <p id="updateResultMsg"></p>
 
-<h3>Delete AppUser</h3>
+
+<br><hr><br> <!-- ========================================================================= -->
+<h3>Number 3: Delete AppUser</h3>
 <form id="deleteAppUserForm">
     <label for="deleteUid">UserID to Delete:</label>
     <input type="number" id="deleteUid" required>
     <button type="submit">Delete User</button>
 </form>
+    <br><hr><br> <!-- ========================================================================= -->
 
-
-<h1>Search Hikes</h1>
+    <h3>Number 4 Select: Search Hikes</h3>
 
     <div>
         <label>Kind: <input type="text" id="kindInput" placeholder="Loop, Out-and-Back, etc."></label><br>
@@ -116,25 +120,27 @@
         <button id="searchHikesBtn">Search Hikes</button>
     </div>
 
-    <h2>Results:</h2>
+    <h3>Results:</h3>
     <div id="hikeResults"></div>
 
     <br><hr><br> <!-- ========================================================================= -->
+    <h3>Number 5 Join</h3>
     <div>
     <label>Attributes to project: <input type="text" id="attributesInput" placeholder="e.g. h2.Name, h1.Difficulty"></label><br>
     <button id="projectHikesBtn">Project Hikes</button>
     </div>
 
-    <h2>Projected Results:</h2>
+    <h4>Projected Results:</h4>
     <div id="projectedResults"></div>
 
     <br><hr><br> <!-- ========================================================================= -->
+    <h3>Number 6 Join</h3>
     <div>
         <label>Hike ID: <input type="number" id="hikeIdInput" placeholder="Enter HikeID"></label><br>
         <button id="findUsersBtn">Find Users Who Hiked</button>
     </div>
 
-    <h2>Users who hiked this trail:</h2>
+    <h4>Users who hiked this trail:</h4>
     <div id="usersResults"></div>
 
     <br><hr><br> <!-- ========================================================================= -->
@@ -144,7 +150,7 @@
     <button id="avgDiffBtn">Show Avg Difficulty per Season</button>
     </div>
 
-    <h2>Average Difficulty per Season:</h2>
+    <h4>Average Difficulty per Season:</h4>
     <div id="avgDiffResults"></div>
     <br><hr><br> <!-- ========================================================================= -->
 
@@ -154,7 +160,7 @@
     <button id="safeHikesBtn">Show Safe Hikes</button>
     </div>
 
-    <h2>Hikes with No Safety Hazards:</h2>
+    <h4>Hikes with No Safety Hazards:</h4>
     <div id="safeHikesResults"></div>
     <br><hr><br> <!-- ========================================================================= -->
 
