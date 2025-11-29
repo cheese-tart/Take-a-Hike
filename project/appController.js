@@ -15,6 +15,17 @@ router.get('/check-db-connection', async (req, res) => {
     }
 });
 
+// LEGACY ENDPOINTS
+router.post("/initiate-demotable", async (req, res) => {
+    const initiateResult = await appService.initiateDemotable();
+    if (initiateResult) {
+        res.json({ success: true });
+    } else {
+        res.status(500).json({ success: false });
+    }
+});
+
+// IMPLEMENTED ENDPOINTS
 router.get('/usertable', async (req, res) => {
     const tableContent = await appService.fetchAppUserFromDb();
     res.json({data: tableContent});
@@ -27,15 +38,6 @@ router.get('/hiketable', async (req, res) => {
     } catch (err) {
         console.error('Error in router /hiketable route:', err);
         res.status(500).json({ error: 'Failed to fetch hikes' });
-    }
-});
-
-router.post("/initiate-demotable", async (req, res) => {
-    const initiateResult = await appService.initiateDemotable();
-    if (initiateResult) {
-        res.json({ success: true });
-    } else {
-        res.status(500).json({ success: false });
     }
 });
 
