@@ -455,8 +455,8 @@ async function findSafeHikes() {
 }
 
 // 9. Nested aggregation with GROUP BY
- async function findGoodConditionHikes() {
-     return await withOracleDB(async (connection) => {
+async function findGoodConditionHikes() {
+    return await withOracleDB(async (connection) => {
         const result = await connection.execute(`
             SELECT h2.Name, h2.Season, h2.TrailCondition
             FROM Hike2 h2
@@ -464,7 +464,7 @@ async function findSafeHikes() {
             HAVING h2.TrailCondition > (
                 SELECT AVG(h2b.TrailCondition)
                 FROM Hike2 h2b
-                WHERE h2bSeason = h2.season
+                WHERE h2b.Season = h2.Season
             )
         `);
         return result.rows;
@@ -474,8 +474,8 @@ async function findSafeHikes() {
 }
 
 // 10. DIVISION
- async function findUsersWhoHikedEveryHike() {
-     return await withOracleDB(async (connection) => {
+async function findUsersWhoHikedEveryHike() {
+    return await withOracleDB(async (connection) => {
         const result = await connection.execute(`
             SELECT u.Name
             FROM AppUser u
@@ -488,7 +488,10 @@ async function findSafeHikes() {
                     WHERE s.UserID = u.UserID
                 )
             )
-        `)
+        `);
+        return result.rows;
+    }).catch(() => {
+        return [];
     })
 }
 
@@ -506,5 +509,6 @@ async function findSafeHikes() {
     findAvgDiffPerSeason,
     findSafeHikes,
     findGoodConditionHikes,
-    findHikeByRating: findUsersWhoHikedEveryHike
+    // findHikeByRating,
+    findUsersWhoHikedEveryHike
  };

@@ -158,18 +158,27 @@ router.post('/safeHikes', async (req, res) => {
     }
 });
 
-router.get('/count-demotable', async (req, res) => {
-    const tableCount = await appService.countDemotable();
-    if (tableCount >= 0) {
-        res.json({ 
-            success: true,  
-            count: tableCount
-        });
-    } else {
-        res.status(500).json({ 
-            success: false, 
-            count: tableCount
-        });
+// Nested aggregation with GROUP BY 9
+// POST /users-who-hiked-every-hike
+router.post(`/good-condition-hikes`, async (req, res) => {
+    try {
+        const results = await appService.findGoodConditionHikes();
+        res.json(results);
+    } catch (err) {
+        console.error('Error in /good-condition-hikes:', err);
+        res.status(500).json({ error: "Failed to fetch good conditoin hikes" });
+    }
+});
+
+// Division 10
+// POST /users-who-hiked-every-hike
+router.post(`/users-who-hiked-every-hike`, async (req, res) => {
+    try {
+        const results = await appService.findUsersWhoHikedEveryHike();
+        res.json(results);
+    } catch (err) {
+        console.error('Error in /users-who-hiked-every-hike:', err);
+        res.status(500).json({ error: "Failed to fetch average difficulty per season" });
     }
 });
 

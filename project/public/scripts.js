@@ -412,6 +412,67 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// 9 Nested aggregation with GROUP BY
+async function getGoodCondHikes() {
+    try {
+        const response = await fetch('/good-condition-hikes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const results = await response.json();
+        return results;
+    } catch (err) {
+        console.error('Error fetching good condition hikes:', err);
+        return [];
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('goodCondBtn');
+    const resultsContainer = document.getElementById('goodCondResults');
+
+    button.addEventListener('click', async () => {
+        const results = await getGoodCondHikes();
+
+        resultsContainer.innerHTML = results.length
+            ? results.map(r => `<div>Name: ${r[0]}, Season: ${r[1]}, Trail Condition: ${Number(r[2])}</div>`).join('')
+            : '<div>No data available</div>';
+    });
+});
+
+// 10 Division
+async function findUsersWhoHikedAllHikes() {
+    try {
+        const response = await fetch('/users-who-hiked-every-hike', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const results = await response.json();
+        return results;
+    } catch (err) {
+        console.error('Error fetching users who hiked all hikes:', err);
+        return [];
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('hikedAllHikesBtn');
+    const resultsContainer = document.getElementById('hikedAllHikesResults');
+
+    button.addEventListener('click', async () => {
+        const results = await findUsersWhoHikedAllHikes();
+
+        resultsContainer.innerHTML = results.length
+            ? results.map(r => `<div>Name: ${r}</div>`).join('')
+            : '<div>No data available</div>';
+    });
+});
 
 // Attach event listener
 document.getElementById("deleteAppUserForm").addEventListener("submit", deleteAppUserHandler);

@@ -8,7 +8,23 @@
     <!-- Link to the external CSS stylesheet. Uncomment if you wish to customize or add styling. -->
     <!-- <link rel="stylesheet" href="styles.css">   -->
 
-    <title>Database Application</title>
+    <title>Hike Reviewer</title>
+   <style>
+    h2 {
+        text-align: center;
+    }
+
+    table {
+        margin-left: auto;
+        margin-right: auto;
+        border-collapse: collapse;
+    }
+
+    table th, table td {
+        padding: 8px 12px;
+        text-align: center;
+    }
+</style>
 </head>
 <body>
     <!-- ===================================================================================== -->
@@ -23,7 +39,8 @@
     </h1>
 
     <br><hr><br> <!-- ========================================================================= -->
-
+<h1>Hike Tracker</h1>
+    <div class="authors">Authors: Jericho, Dilreet, Chester</div>
     <!-- Show 'Demotable'. 
         Data will be fetched and inserted here dynamically using JavaScript. -->
     <h2>AppUser Table</h2>
@@ -214,6 +231,25 @@
 
     <h4>Hikes with No Safety Hazards:</h4>
     <div id="safeHikesResults"></div>
+    <br><hr><br> <!-- ========================================================================= -->
+     <h3>Number 9 Nested aggregation with GROUP BY</h3>
+    <div>
+    <button id="goodCondBtn">Show hikes with good conditions</button>
+    </div>
+
+    <h4>Average Difficulty per Season:</h4>
+    <div id="goodCondResults"></div>
+
+    <br><hr><br> <!-- ========================================================================= -->
+
+    <h3>Number 10 Division</h3>
+    <div>
+    <button id="hikedAllHikesBtn">Show Users who hiked all hikes</button>
+    </div>
+
+    <h4>Users who hiked all hikes:</h4>
+    <div id="hikedAllHikesResults"></div>
+
     <br><hr><br> <!-- ========================================================================= -->
 
     <!-- ===================================================================================== -->
