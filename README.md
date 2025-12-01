@@ -2,20 +2,20 @@
 
 This project is a full-stack platform built with Node.js, Express.js, and Oracle Database, connecting users with different hikes based on their preferences.
 
-# Features
+## Features
 
 - User and Preference Management
 - Hike Recommendations and Insights
 - Review Uploads
 
-# Technical Stack
+## Technical Stack
 
 - **Backend**: Node.js with Express.
 - **Database**: Oracle Database.
 - **API**: RESTful endpoints.
 - **Connection Pooling**: Oracle connection pool for efficient database management.
 
-# Project Structure
+## Project Structure
 
 ```
 project/
@@ -26,7 +26,7 @@ project/
     └── envUtil.js      // Environment configuration utilities
 ```
 
-# Database Schema
+## Database Schema
 
 The system uses multiple interconnected tables:
 - **Users**: Core User data.
@@ -36,7 +36,7 @@ The system uses multiple interconnected tables:
 - **SafetyHazard**: Safety Hazard information.
 - **Feedback**: User-inputted reviews for a Hike.
 
-# Setup
+## Setup
 
 1. **Clone the repository:**
 ```sh
@@ -71,3 +71,7 @@ npm start
 
 6. **Access the API:**
    - By default, the server runs on `http://localhost:3000`.
+
+## Contributing
+
+There are many more features that could be implemented. Feel free to submit issues or pull requests to improve this project. Contributions are always welcome!
